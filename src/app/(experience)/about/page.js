@@ -193,19 +193,21 @@ export default function About() {
 
       {/* ================= AROUND SAKLESHPURA ================= */}
       <section className="bg-primary px-6 py-24 md:px-12 md:py-32 lg:px-10">
-
         <div className="mx-auto max-w-8xl">
 
           {/* Section Heading */}
-          <div className="flex items-center gap-6">
+          <div className="relative flex items-center justify-center">
 
-            <div className="hidden h-px flex-1 bg-foreground/30 md:block" />
+            {/* Left Line */}
+            <div className="absolute left-0 hidden h-px w-[calc(50%-180px)] bg-foreground/30 md:block" />
 
-            <h2 className="shrink-0 text-center font-body text-3xl font-light uppercase tracking-wide text-foreground md:text-5xl">
+            {/* Heading */}
+            <h2 className="relative z-10 text-center font-body text-3xl font-light uppercase tracking-wide text-foreground md:text-5xl">
               Around Sakleshpura
             </h2>
 
-            <div className="hidden h-px flex-1 bg-foreground/30 md:block" />
+            {/* Right Line */}
+            <div className="absolute right-0 hidden h-px w-[calc(50%-180px)] bg-foreground/30 md:block" />
 
           </div>
 
@@ -223,54 +225,54 @@ export default function About() {
 
           {/* ================= DESTINATION CARDS ================= */}
           <div className="mt-20 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-  {destinations.map((destination) => (
-    <article
-      key={destination.title}
-      className="overflow-hidden rounded-2xl border border-foreground/15 bg-[#E3ECC0]"
-    >
-      {/* Image - 4:3 */}
-      <div className="aspect-[4/3] w-full overflow-hidden">
-        <img
-          src={destination.image}
-          alt={destination.alt}
-          className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.02]"
-        />
-      </div>
+            {destinations.map((destination) => (
+              <article
+                key={destination.title}
+                className="overflow-hidden rounded-2xl border border-foreground/15 bg-[#E3ECC0]"
+              >
+                {/* Image - 4:3 */}
+                <div className="aspect-[4/3] w-full overflow-hidden">
+                  <img
+                    src={destination.image}
+                    alt={destination.alt}
+                    className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.02]"
+                  />
+                </div>
 
-      {/* Content */}
-      <div className="p-6">
-        <h3 className="whitespace-nowrap font-body text-2xl font-light uppercase leading-tight tracking-tight text-foreground">
-          {destination.title}
-        </h3>
+                {/* Content */}
+                <div className="p-6">
+                  <h3 className="whitespace-nowrap font-body text-2xl font-light uppercase leading-tight tracking-tight text-foreground">
+                    {destination.title}
+                  </h3>
 
-        <p className="mt-4 font-body text-sm leading-7 text-foreground/70">
-          {destination.description}
-        </p>
+                  <p className="mt-4 font-body text-sm leading-7 text-foreground/70">
+                    {destination.description}
+                  </p>
 
-        {/* Info */}
-        <div className="mt-6 grid grid-cols-2 border-t border-foreground/15 pt-5">
-          <div>
-            <p className="text-lg text-accent">
-              {destination.distance}
-            </p>
-            <p className="mt-1 text-[10px] uppercase tracking-wider text-foreground/55">
-              Distance
-            </p>
+                  {/* Info */}
+                  <div className="mt-6 grid grid-cols-2 border-t border-foreground/15 pt-5">
+                    <div>
+                      <p className="text-lg text-accent">
+                        {destination.distance}
+                      </p>
+                      <p className="mt-1 text-[10px] uppercase tracking-wider text-foreground/55">
+                        Distance
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-lg text-accent">
+                        {destination.drive}
+                      </p>
+                      <p className="mt-1 text-[10px] uppercase tracking-wider text-foreground/55">
+                        Drive
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
-
-          <div>
-            <p className="text-lg text-accent">
-              {destination.drive}
-            </p>
-            <p className="mt-1 text-[10px] uppercase tracking-wider text-foreground/55">
-              Drive
-            </p>
-          </div>
-        </div>
-      </div>
-    </article>
-  ))}
-</div>
 
 
 

@@ -8,7 +8,7 @@ export default function HeroRoom() {
       {/* Hero Image */}
       <div className="absolute inset-0 h-full w-full">
         <img
-          src="/images/rooms/room-hero.jpg"
+          src="/images/rooms/room-hero.jpeg"
           alt="Rooms at SU Villa"
           className="h-full w-full object-cover"
         />

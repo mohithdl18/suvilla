@@ -18,7 +18,7 @@ const blog1 = {
 
   readingTime: "4 min read",
 
-  image: "/images/blog/blog1.jpg",
+  image: "/images/blog/blog1.jpeg",
 
   // Blog content
   content: [

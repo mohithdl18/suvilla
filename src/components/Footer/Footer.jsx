@@ -235,24 +235,45 @@ export default function Footer() {
                 </a>
 
                 <a
-                  href="tel:+919976124365"
-                  className="w-fit font-body text-[15px] font-medium transition-colors duration-300 hover:text-[var(--accent)]"
-                >
-                  +91 99761 24365
-                </a>
+  href="tel:+919976124365"
+  className="hidden w-fit font-body text-[15px] font-medium transition-colors duration-300 hover:text-[var(--accent)] md:block"
+>
+  +91 99761 24365
+</a>
 
-                <a
-                  href="mailto:info@suvilla.in"
-                  className="w-fit font-body text-[15px] font-medium transition-colors duration-300 hover:text-[var(--accent)]"
-                >
-                  info@suvilla.in
-                </a>
+<a
+  href="mailto:info@suvilla.in"
+  className="hidden w-fit font-body text-[15px] font-medium transition-colors duration-300 hover:text-[var(--accent)] md:block"
+>
+  info@suvilla.in
+</a>
 
               </div>
 
             </div>
 
           </div>
+
+        </div>
+
+        {/* =====================================================
+    MOBILE CONTACT
+====================================================== */}
+        <div className="mt-10 flex items-center justify-between border-t border-black/10 pt-6 md:hidden">
+
+          <a
+            href="tel:+919976124365"
+            className="font-body text-sm font-medium text-black/70 transition-colors duration-300 hover:text-[var(--accent)]"
+          >
+            +91 99761 24365
+          </a>
+
+          <a
+            href="mailto:info@suvilla.in"
+            className="font-body text-sm font-medium text-black/70 transition-colors duration-300 hover:text-[var(--accent)]"
+          >
+            info@suvilla.in
+          </a>
 
         </div>
 

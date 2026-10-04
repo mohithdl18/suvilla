@@ -12,7 +12,7 @@ const rooms = [
             "A spacious family stay beside the creek, surrounded by nature.",
         guests: "6 Guests",
         bed: "1 King + Extra Bed",
-        size: "280 sq.ft",
+        size: "456 sq.ft",
         view: "Creek View",
         amenities: [
             "Wi-Fi",
@@ -31,7 +31,7 @@ const rooms = [
             "A peaceful family suite tucked beside gardens and tall trees.",
         guests: "6 Guests",
         bed: "1 King + Extra Bed",
-        size: "260 sq.ft",
+        size: "456 sq.ft",
         view: "Garden View",
         amenities: [
             "Wi-Fi",
@@ -51,7 +51,7 @@ const rooms = [
             "A cozy retreat with hillside views, natural light, and quiet.",
         guests: "3 Guests",
         bed: "1 King + Extra Bed",
-        size: "310 sq.ft",
+        size: "315 sq.ft",
         view: "Hill View",
         amenities: [
             "Wi-Fi",
@@ -70,7 +70,7 @@ const rooms = [
             "A spacious cottage surrounded by greenery overlooking the pond.",
         guests: "3 Guests",
         bed: "1 King + Extra Bed",
-        size: "360 sq.ft",
+        size: "464 sq.ft",
         view: "Pond View",
         amenities: [
             "Wi-Fi",
@@ -79,7 +79,7 @@ const rooms = [
             "Privacy Curtains",
             "Toiletries",
         ],
-        image: "/images/rooms/room-4.jpg",
+        image: "/images/room4.jpg",
     },
 ];
 
