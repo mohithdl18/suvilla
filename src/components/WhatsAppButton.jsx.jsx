@@ -19,10 +19,18 @@
 //   );
 // }
 
+// const message = "Hey SU VILLA! I’d love to enquire about your stay and booking details. Thank you!";
+
+// const whatsappUrl = `https://wa.me/919976124365?text=${encodeURIComponent(message)}`;
+
+{/* <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+  Enquire on WhatsApp
+</a> */}
+
 export default function WhatsAppButton() {
   return (
     <a
-      href="https://wa.me/919876543210"
+      href="https://wa.me/919976124365?text=Hey%20SU%20VILLA%21%20I%E2%80%99d%20love%20to%20enquire%20about%20your%20stay%20and%20booking%20details.%20Thank%20you%21"
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Book Now"

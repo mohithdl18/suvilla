@@ -216,7 +216,6 @@ export default function Rooms() {
                         onMouseEnter={() => setIsHovered(true)}
                         onMouseLeave={() => setIsHovered(false)}
                     >
-
                         {rooms.map((room, index) => {
 
                             const position = getPosition(index);
@@ -225,28 +224,22 @@ export default function Rooms() {
                             return (
                                 <article
                                     key={room.id}
-                                    className="absolute left-1/2 top-1/2 w-[360px] overflow-hidden rounded-[26px] bg-[#E3ECC0] shadow-xl"
+                                    className="absolute left-1/2 top-0 w-[360px] overflow-hidden rounded-[26px] bg-[#E3ECC0] shadow-xl"
                                     style={{
                                         ...cardStyle,
 
                                         marginLeft: "-180px",
-                                        marginTop: "-300px",
-
-                                        // height: "600px",
 
                                         transition:
                                             "transform 1000ms cubic-bezier(0.22, 1, 0.36, 1), opacity 700ms ease",
 
-                                        willChange:
-                                            "transform, opacity",
+                                        willChange: "transform, opacity",
                                     }}
                                 >
 
-                                    {/* ================================================= */}
-                                    {/* IMAGE — FIXED 16:9 */}
-                                    {/* ================================================= */}
+                                    {/* IMAGE */}
 
-                                    <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-t-[26px] bg-[#052a50]">
+                                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-t-[26px] bg-[#052a50]">
 
                                         <img
                                             src={room.image}
@@ -259,55 +252,46 @@ export default function Rooms() {
                                     </div>
 
 
-                                    {/* ================================================= */}
-                                    {/* CONTENT — FIXED HEIGHT */}
-                                    {/* ================================================= */}
+                                    {/* CONTENT */}
 
-                                    <div className="flex  flex-col p-6">
+                                    <div className="flex flex-col p-6">
 
                                         {/* HEADING */}
 
                                         <div className="h-[52px] shrink-0">
+
                                             <h3 className="text-2xl leading-tight text-[#052a50]">
                                                 {room.name}
                                             </h3>
+
                                         </div>
 
 
                                         {/* DESCRIPTION */}
 
                                         <div className="mt-1 h-[56px] shrink-0 overflow-hidden">
+
                                             <p className="line-clamp-2 text-sm leading-7 text-[#052a50]/75">
                                                 {room.description}
                                             </p>
+
                                         </div>
 
 
-                                        {/* =========================
-                                            ROOM DETAILS — 2 ROWS
-                                        ========================= */}
+                                        {/* DETAILS */}
 
                                         <div className="mt-4 h-[76px] shrink-0">
 
                                             <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm">
 
-                                                {/* Guests */}
-
                                                 <span className="flex items-center gap-2">
-
                                                     <span className="text-[#e4b441]">
                                                         ♧
                                                     </span>
-
                                                     {room.guests}
-
                                                 </span>
 
-
-                                                {/* Bed */}
-
                                                 <span className="flex items-center gap-2">
-
                                                     <span className="text-[#e4b441]">
                                                         ▱
                                                     </span>
@@ -315,33 +299,20 @@ export default function Rooms() {
                                                     <span className="truncate">
                                                         {room.bed}
                                                     </span>
-
                                                 </span>
 
-
-                                                {/* Size */}
-
                                                 <span className="flex items-center gap-2">
-
                                                     <span className="text-[#e4b441]">
                                                         ⌁
                                                     </span>
-
                                                     {room.size}
-
                                                 </span>
 
-
-                                                {/* View */}
-
                                                 <span className="flex items-center gap-2">
-
                                                     <span className="text-[#e4b441]">
                                                         ◉
                                                     </span>
-
                                                     {room.view}
-
                                                 </span>
 
                                             </div>
@@ -351,7 +322,7 @@ export default function Rooms() {
 
                                         {/* AMENITIES */}
 
-                                        <div className="mt-4 h-[110px] shrink-0 overflow-hidden">
+                                        <div className="mt-4 shrink-0">
 
                                             <div className="flex flex-wrap content-start gap-2">
 
@@ -373,7 +344,6 @@ export default function Rooms() {
                                 </article>
                             );
                         })}
-
                     </div>
 
 
@@ -381,7 +351,7 @@ export default function Rooms() {
                     {/* NAVIGATION */}
                     {/* ================================================= */}
 
-                    <div className="relative z-50 -mt-2 flex items-center justify-center gap-3">
+                    <div className="relative z-50 mt-[-70px] flex items-center justify-center gap-3">
 
                         <button
                             type="button"

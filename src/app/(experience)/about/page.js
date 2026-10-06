@@ -301,10 +301,13 @@ export default function About() {
           </p>
 
           <Link
-            href="/bookings"
-            className="mt-10 inline-flex items-center border border-foreground px-8 py-4 text-xs uppercase tracking-[0.2em] transition-all duration-300 hover:bg-foreground hover:text-primary"
+            href="https://wa.me/919976124365?text=Hey%20SU%20VILLA%21%20I%E2%80%99d%20love%20to%20enquire%20about%20your%20stay%20and%20booking%20details.%20Thank%20you%21"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-8 inline-flex items-center gap-3 rounded-full bg-foreground px-6 py-3 text-sm font-medium uppercase tracking-wider text-primary transition-all duration-300 hover-bg-accent hover-text-foreground"
           >
             Plan Your Stay
+
           </Link>
 
         </div>
