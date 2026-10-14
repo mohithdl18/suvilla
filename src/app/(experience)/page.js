@@ -46,15 +46,17 @@ export default function Home() {
 
 
       <FeaturedAmenities />
-      {/* <WhyUs /> */}
 
-      <div className="hidden md:block">
+      <FeaturedBlogs />
+      
+
+      {/* <div className="hidden md:block">
         <FeaturedBlogs />
       </div>
 
       <div className="block md:hidden">
         <MobileFeaturedBlogs />
-      </div>
+      </div> */}
 
 
 

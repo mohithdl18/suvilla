@@ -74,6 +74,12 @@ export default function FeaturedAmenities() {
             icon: "⚡",
             color: "bg-[#D5E8F7]",
         },
+        {
+            title: "Projector Hall",
+            description: "Gather for movies and more",
+            icon: "🎬",
+            color: "bg-[#F5D6A6]",
+        },
     ];
 
     // Duplicate the cards to create a seamless loop
@@ -95,13 +101,13 @@ export default function FeaturedAmenities() {
                         </p>
 
                         <h2 className="mt-3 max-w-8xl font-body text-4xl leading-tight md:text-5xl lg:text-6xl">
-                        Everything you need for a slower stay
-                        {/* <br /> */}
+                            Everything you need for a slower stay
+                            {/* <br /> */}
 
-                    </h2>
+                        </h2>
                     </div>
 
-                    
+
 
                     {/* <a
                         href="/amenities"

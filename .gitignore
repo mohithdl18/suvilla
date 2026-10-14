@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+.env.local
 
 # vercel
 .vercel
@@ -39,3 +40,77 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+#Python virtual environments
+
+venv/
+.venv/
+env/
+ENV/
+backend/venv/
+backend/.venv/
+
+#Python cache files
+
+pycache/
+*.py[cod]
+*$py.class
+
+#Python compiled extensions
+
+*.so
+*.pyd
+
+#Python build and packaging
+
+build/
+dist/
+downloads/
+eggs/
+*.egg
+*.egg-info/
+wheels/
+pip-wheel-metadata/
+
+#Python testing and coverage
+
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+
+#Python type checking and linting
+
+.mypy_cache/
+.pyright/
+.ruff_cache/
+
+#Python logs
+
+*.log
+
+#Jupyter Notebook
+
+.ipynb_checkpoints/
+
+#Python environment and tool files
+
+.python-version
+pip-log.txt
+pip-delete-this-directory.txt
+
+#Python IDEs and editors
+
+.vscode/
+.idea/
+
+#OS files
+
+Thumbs.db
+
+
+
+/backend/

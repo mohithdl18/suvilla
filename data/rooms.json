@@ -1,0 +1,63 @@
+
+[
+  {
+    "id": "room1",
+    "name": "Family Suite 01",
+    "price": 6500,
+    "image": "/images/rooms/room1.jpg",
+    "amenities": [
+      "Wi-Fi",
+      "Air Conditioning",
+      "King Bed",
+      "Extra Bed",
+      "Private Bathroom",
+      "Television",
+      "Creek View"
+    ]
+  },
+  {
+    "id": "room2",
+    "name": "Family Suite 02",
+    "price": 7000,
+    "image": "/images/rooms/room2.jpg",
+    "amenities": [
+      "Wi-Fi",
+      "Air Conditioning",
+      "King Bed",
+      "Extra Bed",
+      "Private Bathroom",
+      "Television",
+      "Creek View"
+    ]
+  },
+  {
+    "id": "room3",
+    "name": "Couple Suite",
+    "price": 5500,
+    "image": "/images/rooms/room3.jpg",
+    "amenities": [
+      "Wi-Fi",
+      "Air Conditioning",
+      "King Bed",
+      "Private Bathroom",
+      "Television",
+      "Couple-Friendly Stay",
+      "Scenic View"
+    ]
+  },
+  {
+    "id": "room4",
+    "name": "Pond View Cottage",
+    "price": 6000,
+    "image": "/images/rooms/room4.jpg",
+    "amenities": [
+      "Wi-Fi",
+      "Air Conditioning",
+      "King Bed",
+      "Private Bathroom",
+      "Television",
+      "Pond View",
+      "Private Cottage"
+    ]
+  }
+]

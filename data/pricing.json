@@ -1,0 +1,19 @@
+
+{
+  "currency": "INR",
+  "tax_rate": 0.12,
+  "included_guests_per_room": 2,
+  "weekday_rate": 12999,
+  "weekend_rate": 14999,
+  "peak_festival_long_weekend_rate": 15999,
+  "extra_adult_per_night": 4000,
+  "child_per_night": 2000,
+  "meals": {
+    "breakfast": 0,
+    "lunch": 550,
+    "dinner": 650,
+    "lunch_and_dinner": 1100
+  },
+  "driver_per_stay": 1500,
+  "driver_breakfast_included": true
+}
