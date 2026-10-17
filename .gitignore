@@ -112,5 +112,6 @@ pip-delete-this-directory.txt
 Thumbs.db
 
 
-
 /backend/
+/src/app/(operations)/
+/src/lib/
