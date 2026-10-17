@@ -1,125 +1,295 @@
-
 "use client";
 
-export default function RoomCard({ room, quote, loading, guests, onSelect }) {
-  const price = quote?.subtotal ?? null;
-  const amenities = room.amenities || [];
+import { useMemo, useState } from "react";
+import { calculateRoomPrice } from "@/logic/pricing";
 
-  return (
-    <article className="overflow-hidden rounded-xl border border-slate-300 bg-white">
-      <div className="grid grid-cols-1 md:grid-cols-[3fr_4fr_3fr]">
-        <div className="min-w-0 p-4 md:p-5">
-          <div className="aspect-[4/3] w-full overflow-hidden rounded-lg bg-slate-100">
-            {room.image ? (
-              <img
-                src={room.image}
-                alt={room.name}
-                className="h-full w-full object-cover"
-                loading="lazy"
-              />
+const COLORS = {
+    background: "#F7FAEE",
+    foreground: "#052a50",
+    accent: "#e4b441",
+};
+
+function formatINR(amount) {
+    return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        maximumFractionDigits: 0,
+    }).format(Number(amount) || 0);
+}
+
+function getMaxGuests(room) {
+    const guestDetail = room?.details?.find(
+        (detail) => detail.label?.toLowerCase() === "guests"
+    );
+
+    if (guestDetail?.value) {
+        const match = guestDetail.value.match(/\d+/);
+        if (match) return Number(match[0]);
+    }
+
+    return room?.maxGuests ?? null;
+}
+
+function getAmenities(room) {
+    const allAmenities = [
+        ...(Array.isArray(room?.features) ? room.features : []),
+        ...(Array.isArray(room?.bathroom) ? room.bathroom : []),
+        ...(Array.isArray(room?.tech) ? room.tech : []),
+        ...(Array.isArray(room?.amenities) ? room.amenities : []),
+    ];
+
+    return [...new Set(allAmenities.filter(Boolean))];
+}
+
+function RoomImageCarousel({ room }) {
+    const images = useMemo(() => {
+        const roomImages = Array.isArray(room?.images)
+            ? room.images.filter(Boolean)
+            : [];
+
+        const allImages = [
+            ...(room?.heroImage ? [room.heroImage] : []),
+            ...(room?.image ? [room.image] : []),
+            ...roomImages,
+        ];
+
+        return [...new Set(allImages)];
+    }, [room]);
+
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    const currentImage = images[currentIndex];
+
+    function showPrevious(event) {
+        event.stopPropagation();
+
+        setCurrentIndex((index) =>
+            index === 0 ? images.length - 1 : index - 1
+        );
+    }
+
+    function showNext(event) {
+        event.stopPropagation();
+
+        setCurrentIndex((index) =>
+            index === images.length - 1 ? 0 : index + 1
+        );
+    }
+
+    return (
+        <div
+            className="relative w-full overflow-hidden bg-black/5"
+            style={{ aspectRatio: "4 / 3" }}
+        >
+            {currentImage ? (
+                <img
+                    key={currentImage}
+                    src={currentImage}
+                    alt={`${room?.name || "Room"} image ${currentIndex + 1}`}
+                    className="absolute inset-0 h-full w-full object-cover transition-opacity duration-300"
+                />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-sm text-slate-400">
-                Room image
-              </div>
+                <div className="absolute inset-0 flex items-center justify-center text-sm opacity-60">
+                    Room image
+                </div>
             )}
-          </div>
 
-          <h2 className="mt-3 text-lg font-semibold text-slate-900">
-            {room.name}
-          </h2>
+            {images.length > 1 && (
+                <>
+                    {/* Previous image */}
+                    <button
+                        type="button"
+                        onClick={showPrevious}
+                        aria-label="Previous room image"
+                        className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-xl shadow-md transition hover:bg-white"
+                    >
+                        &#8249;
+                    </button>
 
-          <p
-            className={`mt-1 text-sm font-medium ${
-              room.available ? "text-green-700" : "text-red-600"
-            }`}
-          >
-            {room.available ? "Available" : "Unavailable"}
-          </p>
+                    {/* Next image */}
+                    <button
+                        type="button"
+                        onClick={showNext}
+                        aria-label="Next room image"
+                        className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-xl shadow-md transition hover:bg-white"
+                    >
+                        &#8250;
+                    </button>
 
-          {!room.available && room.unavailable_dates?.length > 0 && (
-            <p className="mt-1 break-words text-xs text-slate-500">
-              Unavailable on: {room.unavailable_dates.join(", ")}
-            </p>
-          )}
+                    {/* Image position dots */}
+                    <div className="absolute inset-x-0 bottom-3 flex items-center justify-center gap-1.5">
+                        {images.map((image, index) => (
+                            <button
+                                key={image}
+                                type="button"
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    setCurrentIndex(index);
+                                }}
+                                aria-label={`Show image ${index + 1} of ${images.length}`}
+                                aria-current={
+                                    index === currentIndex ? "true" : undefined
+                                }
+                                className={`h-2 rounded-full border border-white/80 transition-all ${index === currentIndex
+                                        ? "w-5 bg-white"
+                                        : "w-2 bg-white/50 hover:bg-white/80"
+                                    }`}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Current image count */}
+                    <span className="absolute right-3 top-3 rounded-full bg-black/50 px-2.5 py-1 text-xs font-medium text-white">
+                        {currentIndex + 1} / {images.length}
+                    </span>
+                </>
+            )}
         </div>
+    );
+}
 
-        <div className="min-w-0 border-t border-slate-200 p-4 md:border-l md:border-t-0 md:p-5">
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-700">
-            Amenities
-          </h3>
+export default function RoomCard({
+    room,
+    checkIn,
+    checkOut,
+    nights = 1,
+    adults = 2,
+    children = 0,
+    available = true,
+    onSelectRoom,
+}) {
+    const pricing = useMemo(() => {
+        if (!checkIn || !checkOut || checkOut <= checkIn) {
+            return { roomTotal: 0, nightlyBreakdown: [] };
+        }
 
-          {amenities.length > 0 ? (
-            <ul className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
-              {amenities.map((amenity, index) => (
-                <li
-                  key={`${room.id}-${amenity}-${index}`}
-                  className="flex items-start gap-2 text-sm text-slate-600"
+        try {
+            return calculateRoomPrice(checkIn, checkOut);
+        } catch {
+            return { roomTotal: 0, nightlyBreakdown: [] };
+        }
+    }, [checkIn, checkOut]);
+
+    const nightlyAverage =
+        nights > 0 ? Math.round(pricing.roomTotal / nights) : 0;
+
+    const amenities = useMemo(() => getAmenities(room), [room]);
+    const maxGuests = getMaxGuests(room);
+
+    return (
+        <article
+            className="grid overflow-hidden rounded-2xl border bg-white/60 shadow-sm transition hover:shadow-md md:grid-cols-10"
+            style={{ borderColor: `${COLORS.foreground}18` }}
+        >
+            {/* Left column: image carousel and room title */}
+            <div className="flex flex-col md:col-span-3">
+                <RoomImageCarousel room={room} />
+
+                <div className="flex flex-1 flex-col justify-center px-5 py-5">
+                    <h3 className="text-lg font-semibold leading-snug">
+                        {room.name}
+                    </h3>
+
+                    {room.tagline && (
+                        <p className="mt-1 text-sm opacity-65">
+                            {room.tagline}
+                        </p>
+                    )}
+                </div>
+            </div>
+
+            {/* Middle column: amenities and room capacity */}
+            {/* Middle column: capacity displayed separately above amenities */}
+            <div
+                className="flex flex-col justify-center p-5 md:col-span-4 md:border-l md:p-6"
+                style={{ borderColor: `${COLORS.foreground}18` }}
+            >
+                {/* Maximum guests */}
+                {maxGuests !== null && (
+                    <div
+                        className="mb-5 border-b pb-4"
+                        style={{ borderColor: `${COLORS.foreground}18` }}
+                    >
+                        <p className="text-xs font-semibold uppercase tracking-wider opacity-60">
+                            Maximum occupancy
+                        </p>
+
+                        <p className="mt-2 text-base font-semibold">
+                            
+                             {maxGuests} guests
+                        </p>
+                    </div>
+                )}
+
+                {/* Amenities */}
+                <p className="text-xs font-semibold uppercase tracking-wider opacity-60">
+                            Amenities 
+                        </p>
+
+                {amenities.length > 0 ? (
+                    <ul className="mt-4 flex flex-wrap gap-2">
+                        {amenities.map((amenity) => (
+                            <li
+                                key={amenity}
+                                className="rounded-full px-3 py-1.5 text-xs"
+                                style={{
+                                    backgroundColor: `${COLORS.foreground}09`,
+                                }}
+                            >
+                                {amenity}
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="mt-3 text-sm opacity-60">
+                        Contact us for room amenities.
+                    </p>
+                )}
+            </div>
+
+            {/* Right column: pricing, selected guests, and booking */}
+            <div
+                className="flex flex-col justify-center gap-5 border-t p-5 md:col-span-3 md:border-l md:border-t-0 md:p-6"
+                style={{ borderColor: `${COLORS.foreground}18` }}
+            >
+                <div>
+                    <p className="text-xs opacity-60">
+                        {nights} {nights === 1 ? "night" : "nights"}
+                    </p>
+
+                    <p className="mt-2 text-2xl font-bold">
+                        {formatINR(pricing.roomTotal)}
+                    </p>
+
+                    <p className="mt-2 text-xs opacity-60">
+                        {formatINR(nightlyAverage)} average per night
+                    </p>
+
+                    {/* Selected guest count moved below the night information */}
+                    <p className="mt-3 text-sm font-medium">
+                        {adults} {adults === 1 ? "adult" : "adults"} ·{" "}
+                        {children} {children === 1 ? "child" : "children"} ·{" "}
+                        Including Breakfast
+                    </p>
+
+                    <p className="mt-2 text-xs leading-relaxed opacity-60">
+                        Excludes checkout fees and add-ons
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    disabled={!available}
+                    onClick={() => onSelectRoom?.(room)}
+                    className="w-full rounded-xl px-5 py-3.5 text-sm font-bold transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-40"
+                    style={{
+                        backgroundColor: COLORS.accent,
+                        color: COLORS.foreground,
+                    }}
                 >
-                  <svg
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    className="mt-0.5 h-4 w-4 shrink-0 text-green-700"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="m4 10 4 4 8-8"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-
-                  <span className="break-words">{amenity}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-slate-500">
-              Amenity details coming soon.
-            </p>
-          )}
-        </div>
-
-        <div className="flex min-w-0 flex-col justify-center gap-4 border-t border-slate-200 bg-slate-50 p-4 md:border-l md:border-t-0 md:p-5">
-          <div>
-            <p className="text-sm text-slate-500">Total stay price</p>
-
-            {loading ? (
-              <p className="mt-1 text-sm text-slate-500">
-                Calculating price...
-              </p>
-            ) : price !== null ? (
-              <>
-                <p className="mt-1 break-words text-2xl font-bold text-slate-900">
-                  ₹{Number(price).toLocaleString("en-IN")}
-                </p>
-
-                <p className="mt-1 text-xs leading-5 text-slate-500">
-                  For {quote.nights} night(s), excluding tax
-                </p>
-              </>
-            ) : (
-              <p className="mt-1 text-sm text-slate-500">
-                Price unavailable
-              </p>
-            )}
-
-            <p className="mt-1 text-xs text-slate-500">
-              For {guests.adults + guests.children} guests
-            </p>
-          </div>
-
-          <button
-            type="button"
-            disabled={!room.available || loading || !quote}
-            onClick={() => onSelect(room)}
-            className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Select Room
-          </button>
-        </div>
-      </div>
-    </article>
-  );
+                    {available ? "Select Room" : "Unavailable"}
+                </button>
+            </div>
+        </article>
+    );
 }

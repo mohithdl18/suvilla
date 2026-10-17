@@ -1,295 +1,576 @@
-
 "use client";
 
-import { useEffect, useState } from "react";
-import { apiRequest } from "@/lib/api";
-import BookingStepHeader from "@/components/Booking/BookingStepHeader";
+import { useMemo, useState } from "react";
+import pricing from "@/data/pricing.json";
 
-const ADDONS = [
-  {
-    key: "extra_adults",
-    label: "Extra adults",
-    price: 4000,
-    unit: "per adult / night",
-    max: 10,
-  },
-  {
-    key: "children",
-    label: "Children",
-    price: 2000,
-    unit: "per child / night",
-    max: 10,
-  },
-  {
-    key: "breakfasts",
-    label: "Additional breakfast",
-    price: 450,
-    unit: "per serving",
-    max: 50,
-  },
-  {
-    key: "lunches",
-    label: "Lunch",
-    price: 550,
-    unit: "per serving",
-    max: 50,
-  },
-  {
-    key: "dinners",
-    label: "Dinner",
-    price: 650,
-    unit: "per serving",
-    max: 50,
-  },
-];
+const COLORS = {
+    background: "#F7FAEE",
+    foreground: "#052a50",
+    accent: "#e4b441",
+};
 
-function money(value) {
-  return `₹${Number(value || 0).toLocaleString("en-IN")}`;
+function formatINR(amount) {
+    return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        maximumFractionDigits: 0,
+    }).format(Number(amount) || 0);
 }
 
-export default function AddonsModal({
-  room,
-  checkIn,
-  checkOut,
-  guests,
-  expiresAt,
-  timeLeft,
-  onClose,
-  onContinue,
+function Counter({
+    label,
+    value,
+    min,
+    max,
+    onChange,
+    disabled = false,
 }) {
-  const [addons, setAddons] = useState({
-    extra_adults: Math.max(0, guests.adults - 2),
-    children: guests.children,
-    breakfasts: 0,
-    lunches: 0,
-    dinners: 0,
-    driver: false,
-  });
+    return (
+        <div className="flex items-center justify-between gap-4 py-2">
+            <span className="text-sm font-medium">{label}</span>
 
-  const [quote, setQuote] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function calculateQuote() {
-      setLoading(true);
-      setError("");
-
-      try {
-        const data = await apiRequest("/pricing/quote", {
-          method: "POST",
-          body: JSON.stringify({
-            room_id: room.id,
-            check_in: checkIn,
-            check_out: checkOut,
-            extra_adults: addons.extra_adults,
-            children: addons.children,
-            breakfasts: addons.breakfasts,
-            lunches: addons.lunches,
-            dinners: addons.dinners,
-            driver: addons.driver,
-          }),
-        });
-
-        if (!cancelled) setQuote(data);
-      } catch (err) {
-        if (!cancelled) {
-          setQuote(null);
-          setError(err.message || "Unable to calculate the price.");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    if (Date.now() < expiresAt) {
-      calculateQuote();
-    } else {
-      setQuote(null);
-      setError("Your booking session has expired. Select a room again.");
-    }
-
-    return () => {
-      cancelled = true;
-    };
-  }, [room.id, checkIn, checkOut, addons, expiresAt]);
-
-  useEffect(() => {
-    function handleExpiry() {
-      setError("Your booking session has expired. Select a room again.");
-    }
-
-    window.addEventListener("suvilla:booking-expired", handleExpiry);
-
-    return () => {
-      window.removeEventListener("suvilla:booking-expired", handleExpiry);
-    };
-  }, []);
-
-  function changeQuantity(key, amount, maximum) {
-    setAddons((current) => ({
-      ...current,
-      [key]: Math.max(0, Math.min(maximum, current[key] + amount)),
-    }));
-  }
-
-  function continueToDetails() {
-    if (Date.now() >= expiresAt) {
-      window.dispatchEvent(new CustomEvent("suvilla:booking-expired"));
-      return;
-    }
-
-    if (!quote || loading) return;
-
-    onContinue({
-      room_id: room.id,
-      room_name: room.name,
-      check_in: checkIn,
-      check_out: checkOut,
-      ...addons,
-      quote,
-    });
-  }
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-3 sm:p-5">
-      <section
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="addons-title"
-        className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
-      >
-        <BookingStepHeader step={2} timeLeft={timeLeft} />
-
-        <header className="flex items-center justify-between border-b px-5 py-4 sm:px-6">
-          <div>
-            <h2 id="addons-title" className="text-xl font-bold text-slate-900">
-              Add-ons
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {room.name} · {checkIn} to {checkOut}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close add-ons"
-            className="rounded-full px-3 py-1 text-2xl text-slate-500 hover:bg-slate-100"
-          >
-            ×
-          </button>
-        </header>
-
-        <div className="flex-1 space-y-1 overflow-y-auto px-5 py-4 sm:px-6">
-          <p className="mb-2 text-xs text-slate-500">
-            Add-on prices shown exclude tax.
-          </p>
-
-          {ADDONS.map((addon) => (
-            <div
-              key={addon.key}
-              className="flex items-center justify-between gap-3 border-b border-slate-100 py-4"
-            >
-              <div>
-                <p className="font-semibold text-slate-900">{addon.label}</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {money(addon.price)} {addon.unit}
-                </p>
-              </div>
-
-              <div className="flex shrink-0 items-center gap-3">
+            <div className="flex w-[150px] shrink-0 items-center justify-between">
                 <button
-                  type="button"
-                  aria-label={`Remove ${addon.label}`}
-                  disabled={addons[addon.key] === 0}
-                  onClick={() => changeQuantity(addon.key, -1, addon.max)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-lg disabled:opacity-30"
+                    type="button"
+                    onClick={() => onChange(Math.max(min, value - 1))}
+                    disabled={disabled || value <= min}
+                    aria-label={`Decrease ${label.toLowerCase()}`}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition disabled:cursor-not-allowed disabled:opacity-30"
+                    style={{
+                        borderColor: COLORS.foreground,
+                        color: COLORS.foreground,
+                    }}
                 >
-                  −
+                    −
                 </button>
 
-                <span className="w-5 text-center text-sm font-semibold">
-                  {addons[addon.key]}
+                <span className="w-6 text-center text-sm font-semibold">
+                    {value}
                 </span>
 
                 <button
-                  type="button"
-                  aria-label={`Add ${addon.label}`}
-                  disabled={addons[addon.key] >= addon.max}
-                  onClick={() => changeQuantity(addon.key, 1, addon.max)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-lg disabled:opacity-30"
+                    type="button"
+                    onClick={() => onChange(Math.min(max, value + 1))}
+                    disabled={disabled || value >= max}
+                    aria-label={`Increase ${label.toLowerCase()}`}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border text-lg transition disabled:cursor-not-allowed disabled:opacity-30"
+                    style={{
+                        borderColor: COLORS.accent,
+                        backgroundColor: COLORS.accent,
+                        color: COLORS.foreground,
+                    }}
                 >
-                  +
+                    +
                 </button>
-              </div>
             </div>
-          ))}
-
-          <div className="flex items-center justify-between gap-3 py-4">
-            <div>
-              <p className="font-semibold text-slate-900">
-                Driver accommodation
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                ₹1,500 per stay · breakfast included
-              </p>
-            </div>
-
-            <input
-              type="checkbox"
-              checked={addons.driver}
-              onChange={(event) =>
-                setAddons((current) => ({
-                  ...current,
-                  driver: event.target.checked,
-                }))
-              }
-              aria-label="Include driver accommodation"
-              className="h-5 w-5 accent-blue-600"
-            />
-          </div>
-
-          {error && (
-            <p
-              role="alert"
-              className="rounded-lg bg-red-50 p-3 text-sm text-red-700"
-            >
-              {error}
-            </p>
-          )}
         </div>
+    );
+}
 
-        <footer className="border-t bg-slate-50 px-5 py-4 sm:px-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <span className="text-sm text-slate-600">
-                Estimated total
-              </span>
-              <p className="text-xs text-slate-500">Excluding 12% tax</p>
+export default function AddonsModal({
+    room,
+    checkIn,
+    checkOut,
+    nights = 1,
+    adults = 2,
+    children = 0,
+    onContinue,
+    onClose,
+}) {
+    const [driver, setDriver] = useState(false);
+
+    const initialExtraAdults = Math.max(
+        0,
+        adults - pricing.includedGuests
+    );
+
+    const [extraAdults, setExtraAdults] = useState(initialExtraAdults);
+    const [childCount, setChildCount] = useState(children);
+
+    const totalGuests = pricing.includedGuests + extraAdults + childCount;
+
+    const mealOptions = [
+        {
+            id: "lunch",
+            label: "Lunch",
+            description: "Lunch for your selected guests.",
+            price: pricing.meals.lunch,
+        },
+        {
+            id: "dinner",
+            label: "Dinner",
+            description: "Dinner for your selected guests.",
+            price: pricing.meals.dinner,
+        },
+        {
+            id: "lunchAndDinner",
+            label: "Lunch + Dinner",
+            description: "Both meals for your selected guests.",
+            price: pricing.meals.lunchAndDinner,
+        },
+    ];
+
+    const [mealSelections, setMealSelections] = useState({});
+
+    // Keep every selected meal synchronized with the guest count.
+    // This also handles decreasing the number of guests.
+    function updateGuestCount(type, value) {
+        const nextExtraAdults =
+            type === "adults" ? value : extraAdults;
+
+        const nextChildren =
+            type === "children" ? value : childCount;
+
+        const nextTotalGuests =
+            pricing.includedGuests +
+            nextExtraAdults +
+            nextChildren;
+
+        if (type === "adults") {
+            setExtraAdults(value);
+        } else {
+            setChildCount(value);
+        }
+
+        setMealSelections((current) => {
+            const updated = { ...current };
+
+            for (const option of mealOptions) {
+                const selection = updated[option.id];
+
+                if (selection?.selected) {
+                    updated[option.id] = {
+                        ...selection,
+                        people: nextTotalGuests,
+                    };
+                }
+            }
+
+            return updated;
+        });
+    }
+
+    const selectedMealIds = mealOptions
+        .filter((option) => mealSelections[option.id]?.selected)
+        .map((option) => option.id);
+
+    function toggleMeal(mealId) {
+        setMealSelections((current) => {
+            const existing = current[mealId];
+
+            if (existing?.selected) {
+                return {
+                    ...current,
+                    [mealId]: {
+                        ...existing,
+                        selected: false,
+                    },
+                };
+            }
+
+            return {
+                ...current,
+                [mealId]: {
+                    selected: true,
+                    people: totalGuests,
+                },
+            };
+        });
+    }
+
+    function updateMealPeople(mealId, people) {
+        setMealSelections((current) => ({
+            ...current,
+            [mealId]: {
+                ...current[mealId],
+                people: Math.max(
+                    1,
+                    Math.min(totalGuests, people)
+                ),
+            },
+        }));
+    }
+
+    const addonSummary = useMemo(() => {
+        const items = [];
+
+        if (extraAdults > 0) {
+            items.push({
+                id: "extraAdults",
+                label: `${extraAdults} extra ${
+                    extraAdults === 1 ? "adult" : "adults"
+                }`,
+                amount:
+                    extraAdults *
+                    pricing.extraAdult.price *
+                    nights,
+            });
+        }
+
+        if (childCount > 0) {
+            items.push({
+                id: "children",
+                label: `${childCount} ${
+                    childCount === 1 ? "child" : "children"
+                }`,
+                amount:
+                    childCount *
+                    pricing.child.price *
+                    nights,
+            });
+        }
+
+        for (const option of mealOptions) {
+            const selection = mealSelections[option.id];
+
+            if (!selection?.selected) continue;
+
+            items.push({
+                id: option.id,
+                label: `${option.label} (${selection.people} ${
+                    selection.people === 1 ? "person" : "people"
+                })`,
+                amount:
+                    option.price *
+                    selection.people *
+                    nights,
+            });
+        }
+
+        if (driver) {
+            items.push({
+                id: "driver",
+                label: "Driver accommodation",
+                amount: pricing.driver.price * nights,
+            });
+        }
+
+        return items;
+    }, [
+        extraAdults,
+        childCount,
+        mealSelections,
+        driver,
+        nights,
+    ]);
+
+    const addonsTotal = addonSummary.reduce(
+        (sum, item) => sum + item.amount,
+        0
+    );
+
+    function handleContinue() {
+        const meals = {};
+
+        for (const option of mealOptions) {
+            const selection = mealSelections[option.id];
+
+            if (selection?.selected) {
+                meals[option.id] = {
+                    selected: true,
+                    people: selection.people,
+                    pricePerPersonPerNight: option.price,
+                    total:
+                        option.price *
+                        selection.people *
+                        nights,
+                };
+            }
+        }
+
+        onContinue?.({
+            adults: pricing.includedGuests + extraAdults,
+            extraAdults,
+            children: childCount,
+            totalGuests,
+            mealPlan: selectedMealIds,
+            meals,
+            driver,
+            items: addonSummary,
+            total: addonsTotal,
+        });
+    }
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="addons-title"
+                className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl p-5 shadow-2xl sm:rounded-2xl sm:p-7"
+                style={{
+                    backgroundColor: COLORS.background,
+                    color: COLORS.foreground,
+                }}
+            >
+                {/* Header */}
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-wider opacity-60">
+                            Booking · Step 1 of 3
+                        </p>
+
+                        <h2
+                            id="addons-title"
+                            className="mt-2 text-2xl font-semibold"
+                        >
+                            Customize your stay
+                        </h2>
+
+                        <p className="mt-1 text-sm opacity-70">
+                            {room?.name || "Selected room"} · {nights}{" "}
+                            {nights === 1 ? "night" : "nights"}
+                        </p>
+
+                        {checkIn && checkOut && (
+                            <p className="mt-1 text-xs opacity-60">
+                                {checkIn} to {checkOut}
+                            </p>
+                        )}
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        aria-label="Close add-ons"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full hover:bg-black/5"
+                    >
+                        <span className="text-2xl">×</span>
+                    </button>
+                </div>
+
+                {/* Guests */}
+                <section className="mt-7">
+                    <h3 className="font-semibold">Guests</h3>
+
+                    <div className="mt-3 space-y-3 rounded-xl border border-black/10 bg-white/50 p-4">
+                        <Counter
+                            label="Included guests"
+                            value={pricing.includedGuests}
+                            min={pricing.includedGuests}
+                            max={pricing.includedGuests}
+                            onChange={() => {}}
+                            disabled
+                        />
+
+                        <Counter
+                            label="Extra adults"
+                            value={extraAdults}
+                            min={0}
+                            max={18}
+                            onChange={(value) =>
+                                updateGuestCount("adults", value)
+                            }
+                        />
+
+                        <Counter
+                            label="Children"
+                            value={childCount}
+                            min={0}
+                            max={20}
+                            onChange={(value) =>
+                                updateGuestCount("children", value)
+                            }
+                        />
+
+                        <p className="text-xs opacity-60">
+                            Extra adult: {formatINR(pricing.extraAdult.price)}{" "}
+                            per person per night. Child rates are based on
+                            the configured child pricing.
+                        </p>
+
+                        <div className="border-t border-black/10 pt-3 text-sm font-semibold">
+                            Total guests: {totalGuests}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Meals */}
+                <section className="mt-7">
+                    <h3 className="font-semibold">Meals</h3>
+
+                    <p className="mt-1 text-xs opacity-60">
+                        Select any combination of meals. Meal quantities
+                        automatically follow your guest count.
+                    </p>
+
+                    <div className="mt-3 space-y-2">
+                        {mealOptions.map((option) => {
+                            const selection = mealSelections[option.id];
+                            const selected = Boolean(selection?.selected);
+
+                            return (
+                                <div
+                                    key={option.id}
+                                    className="overflow-hidden rounded-xl border transition"
+                                    style={{
+                                        borderColor: selected
+                                            ? COLORS.accent
+                                            : `${COLORS.foreground}20`,
+                                        backgroundColor: selected
+                                            ? `${COLORS.accent}20`
+                                            : "transparent",
+                                    }}
+                                >
+                                    <label className="flex cursor-pointer items-start gap-3 p-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={selected}
+                                            onChange={() =>
+                                                toggleMeal(option.id)
+                                            }
+                                            className="mt-1 h-4 w-4 accent-[#e4b441]"
+                                        />
+
+                                        <span className="flex-1">
+                                            <span className="block text-sm font-semibold">
+                                                {option.label}
+                                            </span>
+
+                                            <span className="mt-1 block text-xs opacity-65">
+                                                {option.description}
+                                            </span>
+                                        </span>
+
+                                        <span className="text-sm font-semibold">
+                                            {formatINR(option.price)} / person
+                                            / night
+                                        </span>
+                                    </label>
+
+                                    {selected && (
+                                        <div
+                                            className="border-t px-3 py-3"
+                                            style={{
+                                                borderColor: `${COLORS.foreground}15`,
+                                            }}
+                                        >
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div>
+                                                    <p className="text-sm font-medium">
+                                                        Number of people
+                                                    </p>
+
+                                                    <p className="mt-1 text-xs opacity-60">
+                                                        {formatINR(
+                                                            option.price *
+                                                                selection.people *
+                                                                nights
+                                                        )}{" "}
+                                                        total for {nights}{" "}
+                                                        {nights === 1
+                                                            ? "night"
+                                                            : "nights"}
+                                                    </p>
+                                                </div>
+
+                                                <Counter
+                                                    label={`${option.label} people`}
+                                                    value={selection.people}
+                                                    min={1}
+                                                    max={totalGuests}
+                                                    onChange={(value) =>
+                                                        updateMealPeople(
+                                                            option.id,
+                                                            value
+                                                        )
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
+
+                {/* Driver */}
+                <section className="mt-7">
+                    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-black/10 p-4">
+                        <span>
+                            <span className="block font-semibold">
+                                Driver accommodation
+                            </span>
+
+                            <span className="mt-1 block text-xs opacity-60">
+                                {formatINR(pricing.driver.price)} per night
+                            </span>
+                        </span>
+
+                        <input
+                            type="checkbox"
+                            checked={driver}
+                            onChange={(event) =>
+                                setDriver(event.target.checked)
+                            }
+                            className="h-4 w-4 accent-[#e4b441]"
+                        />
+                    </label>
+                </section>
+
+                {/* Add-on summary */}
+                <section className="mt-7 rounded-xl border border-black/10 p-4">
+                    <h3 className="font-semibold">Add-ons summary</h3>
+
+                    {addonSummary.length === 0 ? (
+                        <p className="mt-3 text-sm opacity-60">
+                            No additional charges selected.
+                        </p>
+                    ) : (
+                        <div className="mt-3 space-y-2">
+                            {addonSummary.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="flex justify-between gap-4 text-sm"
+                                >
+                                    <span>{item.label}</span>
+
+                                    <span className="font-medium">
+                                        {formatINR(item.amount)}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="mt-4 flex justify-between border-t border-black/10 pt-3">
+                        <span className="font-semibold">Add-ons total</span>
+
+                        <span className="text-lg font-bold">
+                            {formatINR(addonsTotal)}
+                        </span>
+                    </div>
+
+                    <p className="mt-2 text-xs opacity-60">
+                        Final tax and platform fee will be calculated at
+                        checkout.
+                    </p>
+                </section>
+
+                {/* Actions */}
+                <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-xl border border-black/15 px-5 py-3 text-sm font-semibold transition hover:bg-black/5"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={handleContinue}
+                        className="rounded-xl px-6 py-3 text-sm font-bold transition hover:brightness-95"
+                        style={{
+                            backgroundColor: COLORS.accent,
+                            color: COLORS.foreground,
+                        }}
+                    >
+                        Continue to Checkout
+                    </button>
+                </div>
             </div>
-
-            <span className="text-xl font-bold text-slate-900">
-              {quote
-                ? money(quote.subtotal)
-                : loading
-                  ? "Calculating..."
-                  : "—"}
-            </span>
-          </div>
-
-          <button
-            type="button"
-            disabled={!quote || loading || timeLeft <= 0}
-            onClick={continueToDetails}
-            className="mt-4 w-full rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Continue to Details
-          </button>
-        </footer>
-      </section>
-    </div>
-  );
+        </div>
+    );
 }

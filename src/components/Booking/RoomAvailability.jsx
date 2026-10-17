@@ -2,366 +2,183 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { apiRequest } from "@/lib/api";
-import UtilBar from "@/components/Booking/UtilBar";
-import RoomCard from "@/components/Booking/RoomCard";
-import AddonsModal from "@/components/Booking/AddonsModal";
+import rooms from "@/data/rooms.json";
+import { calculateNights } from "@/logic/pricing";
+import RoomCard from "./RoomCard";
 
-function formatLocalDate(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+const COLORS = {
+    background: "#F7FAEE",
+    foreground: "#052a50",
+    accent: "#e4b441",
+};
 
-  return `${year}-${month}-${day}`;
-}
+export default function RoomAvailability({
+    checkIn,
+    checkOut,
+    adults = 2,
+    children = 0,
+    onSelectRoom,
+    searchKey = 0,
+}) {
+    const [availability, setAvailability] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
-function getToday() {
-  return formatLocalDate(new Date());
-}
-
-function getTomorrow() {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return formatLocalDate(tomorrow);
-}
-
-function formatDisplayDate(value) {
-  const [year, month, day] = value.split("-").map(Number);
-
-  return new Date(year, month - 1, day).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-export default function RoomAvailability() {
-  const [checkIn, setCheckIn] = useState(getToday);
-  const [checkOut, setCheckOut] = useState(getTomorrow);
-
-  const [guests, setGuests] = useState({
-    rooms: 1,
-    adults: 2,
-    children: 0,
-  });
-
-  const [result, setResult] = useState(null);
-  const [quotes, setQuotes] = useState({});
-  const [quoteLoading, setQuoteLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const [selectedRoom, setSelectedRoom] = useState(null);
-  const [expiresAt, setExpiresAt] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(300);
-
-  const loadPrices = useCallback(
-    async (rooms, startDate, endDate, guestSelection) => {
-      setQuoteLoading(true);
-
-      try {
-        const entries = await Promise.all(
-          rooms.map(async (room) => {
-            try {
-              const quote = await apiRequest("/pricing/quote", {
-                method: "POST",
-                body: JSON.stringify({
-                  room_id: room.id,
-                  check_in: startDate,
-                  check_out: endDate,
-                  extra_adults: Math.max(0, guestSelection.adults - 2),
-                  children: guestSelection.children,
-                  breakfasts: 0,
-                  lunches: 0,
-                  dinners: 0,
-                  driver: false,
-                }),
-              });
-
-              return [room.id, quote];
-            } catch {
-              return [room.id, null];
+    const loadAvailability = useCallback(
+        async (signal) => {
+            if (!checkIn || !checkOut || checkOut <= checkIn) {
+                setAvailability([]);
+                setLoading(false);
+                return;
             }
-          })
-        );
 
-        setQuotes(Object.fromEntries(entries));
-      } finally {
-        setQuoteLoading(false);
-      }
-    },
-    []
-  );
+            setLoading(true);
+            setError("");
 
-  const checkRooms = useCallback(
-    async (event) => {
-      event?.preventDefault();
-
-      setError("");
-
-      if (!checkIn || !checkOut || checkOut <= checkIn) {
-        setError("Check-out must be after check-in.");
-        return;
-      }
-
-      setLoading(true);
-      setSelectedRoom(null);
-      setExpiresAt(null);
-      setQuotes({});
-
-      try {
-        const data = await apiRequest(
-          `/availability?check_in=${encodeURIComponent(checkIn)}&check_out=${encodeURIComponent(checkOut)}`
-        );
-
-        setResult(data);
-        await loadPrices(data.rooms || [], checkIn, checkOut, guests);
-      } catch (err) {
-        setResult(null);
-        setError(err.message || "Unable to check availability.");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [checkIn, checkOut, guests, loadPrices]
-  );
-
-  // Load today's availability automatically, only on the first mount.
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadInitialAvailability() {
-      const startDate = getToday();
-      const endDate = getTomorrow();
-
-      try {
-        const data = await apiRequest(
-          `/availability?check_in=${startDate}&check_out=${endDate}`
-        );
-
-        if (cancelled) return;
-
-        setResult(data);
-
-        const entries = await Promise.all(
-          (data.rooms || []).map(async (room) => {
             try {
-              const quote = await apiRequest("/pricing/quote", {
-                method: "POST",
-                body: JSON.stringify({
-                  room_id: room.id,
-                  check_in: startDate,
-                  check_out: endDate,
-                  extra_adults: 0,
-                  children: 0,
-                  breakfasts: 0,
-                  lunches: 0,
-                  dinners: 0,
-                  driver: false,
-                }),
-              });
+                const params = new URLSearchParams({
+                    checkIn,
+                    checkOut,
+                });
 
-              return [room.id, quote];
-            } catch {
-              return [room.id, null];
+                const response = await fetch(
+                    `/api/availability?${params.toString()}`,
+                    { signal }
+                );
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(
+                        result.message ||
+                            "Unable to load room availability."
+                    );
+                }
+
+                setAvailability(result.rooms || []);
+            } catch (err) {
+                if (err.name !== "AbortError") {
+                    console.error("Availability request failed:", err);
+                    setError(
+                        "We couldn't load room availability. Please try again."
+                    );
+                }
+            } finally {
+                if (!signal.aborted) {
+                    setLoading(false);
+                }
             }
-          })
-        );
-
-        if (!cancelled) {
-          setQuotes(Object.fromEntries(entries));
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err.message || "Unable to load room availability.");
-        }
-      }
-    }
-
-    loadInitialAvailability();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // One deadline is shared across every booking step.
-  useEffect(() => {
-    if (!expiresAt) return;
-
-    const updateTimer = () => {
-      const remaining = Math.max(
-        0,
-        Math.ceil((expiresAt - Date.now()) / 1000)
-      );
-
-      setTimeLeft(remaining);
-
-      if (remaining === 0) {
-        setExpiresAt(null);
-        setSelectedRoom(null);
-        setTimeLeft(300);
-
-        window.dispatchEvent(
-          new CustomEvent("suvilla:booking-expired")
-        );
-      }
-    };
-
-    updateTimer();
-
-    const interval = window.setInterval(updateTimer, 250);
-
-    return () => window.clearInterval(interval);
-  }, [expiresAt]);
-
-  useEffect(() => {
-    function handleBookingCompleted() {
-      setSelectedRoom(null);
-      setExpiresAt(null);
-      setTimeLeft(300);
-    }
-
-    window.addEventListener(
-      "suvilla:booking-completed",
-      handleBookingCompleted
-    );
-
-    return () => {
-      window.removeEventListener(
-        "suvilla:booking-completed",
-        handleBookingCompleted
-      );
-    };
-  }, []);
-
-  function handleSelectRoom(room) {
-    if (!room.available) return;
-
-    const deadline = Date.now() + 5 * 60 * 1000;
-
-    setError("");
-    setExpiresAt(deadline);
-    setTimeLeft(300);
-    setSelectedRoom(room);
-  }
-
-  function handleCloseBooking() {
-    setSelectedRoom(null);
-    setExpiresAt(null);
-    setTimeLeft(300);
-
-    window.dispatchEvent(
-      new CustomEvent("suvilla:booking-cancelled")
-    );
-  }
-
-  function handleContinueToBooking(selection) {
-    if (!expiresAt || Date.now() >= expiresAt) {
-      setSelectedRoom(null);
-      setExpiresAt(null);
-      setTimeLeft(300);
-
-      window.dispatchEvent(
-        new CustomEvent("suvilla:booking-expired")
-      );
-
-      return;
-    }
-
-    window.dispatchEvent(
-      new CustomEvent("suvilla:booking-selection", {
-        detail: {
-          ...selection,
-          expiresAt,
-          room_name: selectedRoom?.name || "",
         },
-      })
+        [checkIn, checkOut]
     );
 
-    setSelectedRoom(null);
-  }
+    useEffect(() => {
+        const controller = new AbortController();
 
-  return (
-    <section className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-        SU VILLA — Room Availability
-      </h1>
+        loadAvailability(controller.signal);
 
-      <UtilBar
-        checkIn={checkIn}
-        checkOut={checkOut}
-        setCheckIn={setCheckIn}
-        setCheckOut={setCheckOut}
-        guests={guests}
-        setGuests={setGuests}
-        onCheckRooms={checkRooms}
-        loading={loading}
-      />
+        return () => controller.abort();
+    }, [loadAvailability, searchKey]);
 
-      {result && (
-        <p className="text-sm text-slate-600">
-          {result.nights} night(s): {formatDisplayDate(result.check_in)} to{" "}
-          {formatDisplayDate(result.check_out)}
-          <span className="ml-2">
-            · {guests.rooms} room(s), {guests.adults} adult(s),{" "}
-            {guests.children} child(ren)
-          </span>
-        </p>
-      )}
+    const nights =
+        checkIn && checkOut && checkOut > checkIn
+            ? calculateNights(checkIn, checkOut)
+            : 0;
 
-      {error && (
-        <p
-          role="alert"
-          className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-        >
-          {error}
-        </p>
-      )}
+    if (!checkIn || !checkOut || checkOut <= checkIn) {
+        return (
+            <div
+                className="rounded-2xl border p-8 text-center"
+                style={{
+                    backgroundColor: COLORS.background,
+                    borderColor: `${COLORS.foreground}20`,
+                    color: COLORS.foreground,
+                }}
+            >
+                <p className="text-sm opacity-70">
+                    Select your check-in and checkout dates, then search
+                    to view available rooms.
+                </p>
+            </div>
+        );
+    }
 
-      {loading && !result && (
-        <div className="rounded-xl border p-8 text-center text-slate-500">
-          Checking room availability...
-        </div>
-      )}
+    return (
+        <section className="w-full">
+            {loading && (
+                <div
+                    className="rounded-xl border p-6 text-center text-sm"
+                    style={{
+                        borderColor: `${COLORS.foreground}20`,
+                        color: COLORS.foreground,
+                    }}
+                    role="status"
+                >
+                    Checking room availability...
+                </div>
+            )}
 
-      {result && (
-        <div className="space-y-4">
-          {result.rooms
-            .filter((room) => {
-              const totalGuests = guests.adults + guests.children;
+            {error && !loading && (
+                <div
+                    className="rounded-xl border border-red-200 bg-red-50 p-5"
+                    role="alert"
+                >
+                    <p className="text-sm text-red-800">{error}</p>
 
-              if (totalGuests <= 3) {
-                return true;
-              }
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const controller = new AbortController();
+                            loadAvailability(controller.signal);
+                        }}
+                        className="mt-3 rounded-lg px-4 py-2 text-sm font-semibold"
+                        style={{
+                            backgroundColor: COLORS.accent,
+                            color: COLORS.foreground,
+                        }}
+                    >
+                        Try again
+                    </button>
+                </div>
+            )}
 
-              return room.id === "room1" || room.id === "room2";
-            })
-            .map((room) => (
-              <RoomCard
-                key={room.id}
-                room={room}
-                quote={quotes[room.id]}
-                loading={quoteLoading}
-                guests={guests}
-                onSelect={handleSelectRoom}
-              />
-            ))}
-        </div>
-      )}
+            {!loading && !error && (
+                <div className="space-y-5">
+                    {rooms.map((room) => {
+                        const roomStatus = availability.find(
+                            (item) => item.roomId === room.id
+                        );
 
-      {selectedRoom && expiresAt && (
-        <AddonsModal
-          room={selectedRoom}
-          checkIn={checkIn}
-          checkOut={checkOut}
-          guests={guests}
-          expiresAt={expiresAt}
-          timeLeft={timeLeft}
-          onClose={handleCloseBooking}
-          onContinue={handleContinueToBooking}
-        />
-      )}
-    </section>
-  );
+                        const available = roomStatus?.available === true;
+
+                        return (
+                            <RoomCard
+                                key={room.id}
+                                room={room}
+                                checkIn={checkIn}
+                                checkOut={checkOut}
+                                nights={nights}
+                                adults={adults}
+                                children={children}
+                                available={available}
+                                onSelectRoom={onSelectRoom}
+                            />
+                        );
+                    })}
+
+                    {availability.length === 0 && (
+                        <p
+                            className="rounded-xl border p-5 text-center text-sm"
+                            style={{
+                                borderColor: `${COLORS.foreground}20`,
+                                color: COLORS.foreground,
+                            }}
+                        >
+                            No availability information was returned.
+                        </p>
+                    )}
+                </div>
+            )}
+        </section>
+    );
 }

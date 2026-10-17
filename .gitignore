@@ -110,8 +110,3 @@ pip-delete-this-directory.txt
 #OS files
 
 Thumbs.db
-
-
-/backend/
-/src/app/(operations)/
-/src/lib/

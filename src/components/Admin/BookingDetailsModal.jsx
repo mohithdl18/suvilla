@@ -1,344 +1,478 @@
-
 "use client";
 
 import { useEffect } from "react";
 
-function formatLabel(value) {
-  return String(value)
-    .replace(/_/g, " ")
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
+const currencyFormatter = new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+});
+
+function currency(value) {
+    return currencyFormatter.format(Number(value) || 0);
 }
 
 function formatDate(value) {
-  if (!value || typeof value !== "string") return value ?? "—";
+    if (!value) return "—";
 
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const [year, month, day] = String(value).split("-").map(Number);
 
-  if (!match) return value;
+    if (!year || !month || !day) return value;
 
-  const [, year, month, day] = match;
-
-  return new Date(
-    Number(year),
-    Number(month) - 1,
-    Number(day)
-  ).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+    return new Date(year, month - 1, day).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+    });
 }
 
-function formatMoney(value) {
-  const amount = Number(value);
+function formatDateTime(value) {
+    if (!value) return "—";
 
-  if (!Number.isFinite(amount)) return String(value ?? "—");
+    const date = new Date(value);
 
-  return `₹${amount.toLocaleString("en-IN")}`;
+    if (Number.isNaN(date.getTime())) return "—";
+
+    return date.toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
 }
 
-function DetailCard({ label, value, field = "" }) {
-  const normalizedField = field.toLowerCase();
-
-  if (value === undefined || value === null || value === "") {
-    value = "—";
-  }
-
-  let displayValue = value;
-
-  if (typeof value === "boolean") {
-    displayValue = value ? "Yes" : "No";
-  } else if (
-    typeof value === "number" &&
-    /(price|amount|total|tax|subtotal|cost|charge|revenue)/i.test(
-      normalizedField
-    )
-  ) {
-    displayValue = formatMoney(value);
-  } else if (
-    typeof value === "string" &&
-    /(check_in|check_out|created_at|updated_at|booking_date)/i.test(
-      normalizedField
-    )
-  ) {
-    displayValue = formatDate(value);
-  } else if (Array.isArray(value)) {
-    displayValue = value.length ? value.join(", ") : "—";
-  } else if (typeof value === "object") {
-    displayValue = JSON.stringify(value);
-  }
-
-  return (
-    <div className="min-w-0 rounded-lg border border-gray-100 bg-gray-50 p-3">
-      <p className="text-xs font-medium text-gray-500">{label}</p>
-
-      <p className="mt-1 break-words text-sm font-medium text-gray-900">
-        {String(displayValue)}
-      </p>
-    </div>
-  );
+function Detail({ label, value }) {
+    return (
+        <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wider opacity-50">
+                {label}
+            </p>
+            <p className="mt-1 break-words text-sm font-medium">
+                {value === undefined || value === null || value === ""
+                    ? "—"
+                    : String(value)}
+            </p>
+        </div>
+    );
 }
 
-function DetailSection({ title, children }) {
-  return (
-    <section className="border-b border-gray-100 py-5 last:border-b-0">
-      <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">
-        {title}
-      </h3>
-
-      {children}
-    </section>
-  );
+function Section({ title, children }) {
+    return (
+        <section className="border-t py-5 first:border-t-0 first:pt-0">
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[#052a50]">
+                {title}
+            </h3>
+            {children}
+        </section>
+    );
 }
 
-function DetailGrid({ details }) {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {details.map(([key, value]) => (
-        <DetailCard
-          key={key}
-          label={formatLabel(key)}
-          field={key}
-          value={value}
-        />
-      ))}
-    </div>
-  );
+function getStatusStyle(status) {
+    switch (String(status || "").toLowerCase()) {
+        case "confirmed":
+            return {
+                background: "#dcfce7",
+                color: "#166534",
+                label: "Confirmed",
+            };
+
+        case "cancelled":
+        case "canceled":
+            return {
+                background: "#fee2e2",
+                color: "#991b1b",
+                label: "Cancelled",
+            };
+
+        case "rejected":
+            return {
+                background: "#ffedd5",
+                color: "#9a3412",
+                label: "Rejected",
+            };
+
+        default:
+            return {
+                background: "#f1f5f9",
+                color: "#334155",
+                label: status || "Unknown",
+            };
+    }
 }
 
-export default function BookingDetailsModal({ booking, onClose }) {
-  useEffect(() => {
-    if (!booking) return;
-
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        onClose();
-      }
+function getPaymentStyle(status) {
+    if (String(status || "").toLowerCase() === "paid") {
+        return {
+            background: "#dcfce7",
+            color: "#166534",
+            label: "Paid",
+        };
     }
 
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+    return {
+        background: "#f1f5f9",
+        color: "#334155",
+        label: status || "Not recorded",
     };
-  }, [booking, onClose]);
+}
 
-  if (!booking) return null;
+function getAddonLines(booking) {
+    const addons = booking.addons || {};
+    const lines = [];
 
-  const customer = booking.customer || {};
-  const guests = booking.guests || {};
-  const meals = booking.meals || {};
-  const prices = booking.price_breakdown || {};
+    if (Number(addons.extraAdults) > 0) {
+        lines.push({
+            label: `Extra adults (${addons.extraAdults})`,
+            amount: addons.extraAdultTotal,
+        });
+    }
 
-  const additionalDetails = Object.fromEntries(
-    Object.entries(booking).filter(
-      ([key]) =>
-        ![
-          "_id",
-          "booking_id",
-          "customer",
-          "room_id",
-          "room_name",
-          "check_in",
-          "check_out",
-          "nights",
-          "guests",
-          "meals",
-          "driver",
-          "price_breakdown",
-          "booking_status",
-          "payment_status",
-        ].includes(key)
-    )
-  );
+    if (Number(addons.children) > 0) {
+        lines.push({
+            label: `Children (${addons.children})`,
+            amount: addons.childTotal,
+        });
+    }
 
-  const guestDetails = {
-    included_adults: guests.included_adults ?? 2,
-    extra_adults: guests.extra_adults ?? booking.extra_adults ?? 0,
-    children: guests.children ?? booking.children ?? 0,
-  };
+    if (Number(addons.extraBreakfast) > 0) {
+        lines.push({
+            label: `Extra breakfasts (${addons.extraBreakfast})`,
+            amount: addons.breakfastTotal,
+        });
+    }
 
-  const mealDetails = {
-    breakfasts: meals.breakfasts ?? booking.breakfasts ?? 0,
-    lunches: meals.lunches ?? booking.lunches ?? 0,
-    dinners: meals.dinners ?? booking.dinners ?? 0,
-  };
+    if (addons.driver) {
+        lines.push({
+            label: "Driver accommodation",
+            amount: addons.driverTotal,
+        });
+    }
 
-  const total = prices.total;
+    const mealLabels = {
+        lunch: "Lunch",
+        dinner: "Dinner",
+        lunchAndDinner: "Lunch and dinner",
+    };
 
-  return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-3 sm:p-6"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
-          onClose();
+    Object.entries(addons.meals || {}).forEach(([key, meal]) => {
+        if (meal?.selected) {
+            lines.push({
+                label: mealLabels[key] || key,
+                detail: meal.people ? `${meal.people} people` : "",
+                amount: meal.total,
+            });
         }
-      }}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="booking-modal-title"
-        className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
-      >
-        {/* Modal header */}
-        <div className="flex items-start justify-between gap-4 border-b border-gray-200 p-5 sm:p-6">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-              SU VILLA · Booking Details
-            </p>
+    });
 
-            <h2
-              id="booking-modal-title"
-              className="mt-2 break-words text-xl font-bold text-gray-900 sm:text-2xl"
+    if (Array.isArray(addons.mealPlan)) {
+        addons.mealPlan.forEach((meal) => {
+            if (typeof meal === "string" && !addons.meals?.[meal]?.selected) {
+                lines.push({
+                    label: mealLabels[meal] || meal,
+                    amount: null,
+                });
+            }
+        });
+    }
+
+    if (Array.isArray(addons.items)) {
+        addons.items.forEach((item) => {
+            lines.push({
+                label: `${item.name || "Additional item"}${
+                    item.quantity ? ` × ${item.quantity}` : ""
+                }`,
+                amount: item.total,
+            });
+        });
+    }
+
+    return lines;
+}
+
+export default function BookingDetailsModal({
+    booking,
+    onClose,
+}) {
+    useEffect(() => {
+        if (!booking) return;
+
+        const previousOverflow = document.body.style.overflow;
+
+        document.body.style.overflow = "hidden";
+
+        function handleKeyDown(event) {
+            if (event.key === "Escape") {
+                onClose?.();
+            }
+        }
+
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [booking, onClose]);
+
+    if (!booking) return null;
+
+    const customer = booking.customer || {};
+    const guests = booking.guests || {};
+    const pricing = booking.pricing || {};
+    const addons = booking.addons || {};
+
+    const status = getStatusStyle(booking.status);
+    const paymentStatus = getPaymentStyle(booking.paymentStatus);
+    const addonLines = getAddonLines(booking);
+
+    const amountPaid =
+        String(booking.paymentStatus || "").toLowerCase() === "paid"
+            ? Number(pricing.total) || 0
+            : 0;
+
+    return (
+        <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-[#052a50]/60 p-3 backdrop-blur-sm sm:p-6"
+            onMouseDown={(event) => {
+                if (event.target === event.currentTarget) {
+                    onClose?.();
+                }
+            }}
+        >
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="booking-modal-title"
+                className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-[#F7FAEE] text-[#052a50] shadow-2xl"
             >
-              {booking.booking_id || "Booking Details"}
-            </h2>
+                <header className="flex items-start justify-between gap-4 border-b border-[#052a50]/10 px-5 py-5 sm:px-7">
+                    <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9a7b24]">
+                            SU VILLA · Reservation
+                        </p>
 
-            <p className="mt-1 text-sm text-gray-500">
-              {booking.room_name || booking.room_id || "Room not specified"}
-            </p>
-          </div>
+                        <h2
+                            id="booking-modal-title"
+                            className="mt-2 break-words text-xl font-semibold sm:text-2xl"
+                        >
+                            {booking.bookingId || "Booking details"}
+                        </h2>
 
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close booking details"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 text-xl text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
-          >
-            ×
-          </button>
-        </div>
+                        <p className="mt-1 text-sm opacity-60">
+                            Created {formatDateTime(booking.createdAt)}
+                        </p>
+                    </div>
 
-        {/* Scrollable details */}
-        <div className="overflow-y-auto px-5 sm:px-6">
-          <DetailSection title="Booking Information">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <DetailCard
-                label="Booking ID"
-                value={booking.booking_id}
-              />
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        aria-label="Close booking details"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#052a50]/15 text-xl transition hover:bg-[#052a50]/5"
+                    >
+                        ×
+                    </button>
+                </header>
 
-              <DetailCard
-                label="Room"
-                value={booking.room_name || booking.room_id}
-              />
+                <div className="overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
+                    <div className="mb-6 flex flex-wrap gap-2">
+                        <span
+                            className="rounded-full px-3 py-1.5 text-xs font-semibold"
+                            style={{
+                                backgroundColor: status.background,
+                                color: status.color,
+                            }}
+                        >
+                            {status.label}
+                        </span>
 
-              <DetailCard
-                label="Check-in"
-                field="check_in"
-                value={booking.check_in}
-              />
+                        <span
+                            className="rounded-full px-3 py-1.5 text-xs font-semibold"
+                            style={{
+                                backgroundColor: paymentStatus.background,
+                                color: paymentStatus.color,
+                            }}
+                        >
+                            Payment: {paymentStatus.label}
+                        </span>
+                    </div>
 
-              <DetailCard
-                label="Check-out"
-                field="check_out"
-                value={booking.check_out}
-              />
+                    <Section title="Stay details">
+                        <div className="grid grid-cols-2 gap-x-5 gap-y-5 sm:grid-cols-3">
+                            <Detail label="Room" value={booking.roomId} />
+                            <Detail
+                                label="Check-in"
+                                value={formatDate(booking.checkIn)}
+                            />
+                            <Detail
+                                label="Check-out"
+                                value={formatDate(booking.checkOut)}
+                            />
+                            <Detail
+                                label="Duration"
+                                value={`${booking.nights || 0} ${
+                                    Number(booking.nights) === 1 ? "night" : "nights"
+                                }`}
+                            />
+                            <Detail
+                                label="Adults"
+                                value={guests.adults ?? "—"}
+                            />
+                            <Detail
+                                label="Children"
+                                value={guests.children ?? "—"}
+                            />
+                        </div>
+                    </Section>
 
-              <DetailCard
-                label="Number of Nights"
-                value={booking.nights}
-              />
+                    <Section title="Guest information">
+                        <div className="grid grid-cols-1 gap-x-5 gap-y-5 sm:grid-cols-2">
+                            <Detail label="Full name" value={customer.name} />
+                            <Detail label="Phone" value={customer.phone} />
+                            <Detail label="Email" value={customer.email} />
+                            <Detail label="Address" value={customer.address} />
+                            <Detail label="City" value={customer.city} />
+                            <Detail label="PIN code" value={customer.pinCode} />
+                        </div>
+                    </Section>
 
-              <DetailCard
-                label="Booking Status"
-                value={booking.booking_status}
-              />
+                    <Section title="Add-ons and extras">
+                        {addonLines.length > 0 ? (
+                            <div className="space-y-3">
+                                {addonLines.map((item, index) => (
+                                    <div
+                                        key={`${item.label}-${index}`}
+                                        className="flex items-start justify-between gap-4 text-sm"
+                                    >
+                                        <div>
+                                            <p className="font-medium">
+                                                {item.label}
+                                            </p>
 
-              <DetailCard
-                label="Payment Status"
-                value={booking.payment_status}
-              />
+                                            {item.detail && (
+                                                <p className="mt-1 text-xs opacity-55">
+                                                    {item.detail}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <span className="shrink-0 font-medium">
+                                            {item.amount == null
+                                                ? "—"
+                                                : currency(item.amount)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm opacity-55">
+                                No add-ons recorded for this booking.
+                            </p>
+                        )}
+
+                        {addons.total != null && (
+                            <div className="mt-4 flex justify-between border-t border-[#052a50]/10 pt-3 text-sm font-semibold">
+                                <span>Total add-ons</span>
+                                <span>{currency(addons.total)}</span>
+                            </div>
+                        )}
+                    </Section>
+
+                    <Section title="Special requests">
+                        <p className="whitespace-pre-wrap text-sm leading-6">
+                            {customer.specialRequest || "No special requests."}
+                        </p>
+                    </Section>
+
+                    <Section title="Price breakdown">
+                        <div className="space-y-3 text-sm">
+                            <div className="flex justify-between gap-4">
+                                <span className="opacity-65">Room total</span>
+                                <span>{currency(pricing.roomTotal)}</span>
+                            </div>
+
+                            <div className="flex justify-between gap-4">
+                                <span className="opacity-65">Add-ons total</span>
+                                <span>{currency(pricing.addonTotal)}</span>
+                            </div>
+
+                            <div className="flex justify-between gap-4">
+                                <span className="opacity-65">Subtotal</span>
+                                <span>{currency(pricing.subtotal)}</span>
+                            </div>
+
+                            <div className="flex justify-between gap-4">
+                                <span className="opacity-65">Tax</span>
+                                <span>{currency(pricing.tax)}</span>
+                            </div>
+
+                            <div className="flex justify-between gap-4">
+                                <span className="opacity-65">Platform fee</span>
+                                <span>{currency(pricing.platformFee)}</span>
+                            </div>
+
+                            <div className="mt-4 flex items-center justify-between gap-4 border-t border-[#052a50]/15 pt-4">
+                                <span className="font-semibold">Booking total</span>
+                                <span className="text-xl font-semibold">
+                                    {currency(pricing.total)}
+                                </span>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-4 rounded-xl bg-white/70 p-4">
+                                <span className="text-sm opacity-65">
+                                    Amount paid
+                                </span>
+                                <span className="font-semibold">
+                                    {currency(amountPaid)}
+                                </span>
+                            </div>
+                        </div>
+                    </Section>
+
+                    {Array.isArray(pricing.nightlyBreakdown) &&
+                        pricing.nightlyBreakdown.length > 0 && (
+                            <Section title="Nightly rate breakdown">
+                                <div className="space-y-3">
+                                    {pricing.nightlyBreakdown.map((night, index) => (
+                                        <div
+                                            key={`${night.date || index}`}
+                                            className="flex items-center justify-between gap-4 text-sm"
+                                        >
+                                            <div>
+                                                <p className="font-medium">
+                                                    {formatDate(night.date)}
+                                                </p>
+                                                {night.type && (
+                                                    <p className="mt-1 text-xs opacity-55">
+                                                        {night.type}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <span className="font-medium">
+                                                {currency(
+                                                    night.rate ??
+                                                        night.price ??
+                                                        night.amount
+                                                )}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Section>
+                        )}
+                </div>
+
+                <footer className="flex justify-end border-t border-[#052a50]/10 bg-white/50 px-5 py-4 sm:px-7">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-xl bg-[#052a50] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#0b3b6b]"
+                    >
+                        Close details
+                    </button>
+                </footer>
             </div>
-          </DetailSection>
-
-          <DetailSection title="Customer Details">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <DetailCard
-                label="Full Name"
-                value={customer.name}
-              />
-
-              <DetailCard
-                label="Phone Number"
-                value={customer.phone}
-              />
-
-              <DetailCard
-                label="Email Address"
-                value={customer.email}
-              />
-            </div>
-          </DetailSection>
-
-          <DetailSection title="Guest Details">
-            <DetailGrid details={Object.entries(guestDetails)} />
-          </DetailSection>
-
-          <DetailSection title="Meals and Extras">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <DetailCard
-                label="Breakfast Quantity"
-                value={mealDetails.breakfasts}
-              />
-
-              <DetailCard
-                label="Lunch Quantity"
-                value={mealDetails.lunches}
-              />
-
-              <DetailCard
-                label="Dinner Quantity"
-                value={mealDetails.dinners}
-              />
-
-              <DetailCard
-                label="Driver Included"
-                value={booking.driver}
-              />
-            </div>
-          </DetailSection>
-
-          <DetailSection title="Complete Price Breakdown">
-            {Object.keys(prices).length > 0 ? (
-              <DetailGrid details={Object.entries(prices)} />
-            ) : (
-              <p className="text-sm text-gray-500">
-                No price breakdown is stored for this booking.
-              </p>
-            )}
-
-            {total !== undefined && total !== null && (
-              <div className="mt-4 flex items-center justify-between gap-4 rounded-lg bg-gray-900 p-4 text-white">
-                <span className="text-sm font-medium">Grand Total</span>
-
-                <span className="text-xl font-bold">
-                  {formatMoney(total)}
-                </span>
-              </div>
-            )}
-          </DetailSection>
-
-          {Object.keys(additionalDetails).length > 0 && (
-            <DetailSection title="Additional Booking Information">
-              <DetailGrid details={Object.entries(additionalDetails)} />
-            </DetailSection>
-          )}
         </div>
-
-        {/* Modal footer */}
-        <div className="flex justify-end border-t border-gray-200 bg-gray-50 p-4 sm:px-6">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-700"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }

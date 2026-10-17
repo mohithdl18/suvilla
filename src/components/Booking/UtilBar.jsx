@@ -1,247 +1,351 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import DateRangeCalendar from "./DateRangeCalendar";
+import GuestSelector from "./GuestSelector";
+
+const COLORS = {
+    background: "#F7FAEE",
+    foreground: "#052a50",
+    accent: "#e4b441",
+};
+
+function formatDisplayDate(dateString) {
+    if (!dateString) return "Select date";
+
+    const [year, month, day] = dateString.split("-").map(Number);
+
+    return new Date(year, month - 1, day).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    });
+}
+
+function getLocalDateString(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
+function getDefaultDates() {
+    const today = new Date();
+    const tomorrow = new Date(today);
+
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return {
+        checkIn: getLocalDateString(today),
+        checkOut: getLocalDateString(tomorrow),
+    };
+}
 
 export default function UtilBar({
-  checkIn,
-  checkOut,
-  setCheckIn,
-  setCheckOut,
-  guests,
-  setGuests,
-  onCheckRooms,
-  loading,
+    onSearch,
+    initialCheckIn,
+    initialCheckOut,
+    initialAdults = 2,
+    initialChildren = 0,
 }) {
-  const [guestsOpen, setGuestsOpen] = useState(false);
+    const defaults = getDefaultDates();
 
-  const totalGuests = guests.adults + guests.children;
-  const maxGuests = totalGuests > 3 ? 6 : 6;
+    const [checkIn, setCheckIn] = useState(
+        initialCheckIn || defaults.checkIn
+    );
+    const [checkOut, setCheckOut] = useState(
+        initialCheckOut || defaults.checkOut
+    );
+    const [adults, setAdults] = useState(initialAdults);
+    const [children, setChildren] = useState(initialChildren);
+    const [activePopup, setActivePopup] = useState(null);
+    const [error, setError] = useState("");
 
-  function updateGuest(key, amount, minimum, maximum) {
-    setGuests((current) => {
-      const nextValue = Math.max(
-        minimum,
-        Math.min(maximum, current[key] + amount)
-      );
+    const containerRef = useRef(null);
 
-      const next = { ...current, [key]: nextValue };
+    useEffect(() => {
+        function handleOutsideClick(event) {
+            if (
+                containerRef.current &&
+                !containerRef.current.contains(event.target)
+            ) {
+                setActivePopup(null);
+            }
+        }
 
-      // At least 2 adults, with a combined maximum of 6 guests.
-      if (next.adults + next.children > 6) return current;
+        function handleEscape(event) {
+            if (event.key === "Escape") {
+                setActivePopup(null);
+            }
+        }
 
-      return next;
-    });
-  }
+        document.addEventListener("mousedown", handleOutsideClick);
+        document.addEventListener("keydown", handleEscape);
 
-  return (
-    <form
-      onSubmit={onCheckRooms}
-      className="rounded-xl border border-slate-300 bg-white p-4 sm:p-5"
-    >
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
-        <label className="flex min-w-0 flex-col gap-2">
-          <span className="text-sm font-medium text-slate-700">
-            Check-in
-          </span>
-          <input
-            type="date"
-            value={checkIn}
-            min={new Date().toLocaleDateString("en-CA")}
-            required
-            onChange={(event) => {
-              const nextCheckIn = event.target.value;
-              setCheckIn(nextCheckIn);
+        return () => {
+            document.removeEventListener("mousedown", handleOutsideClick);
+            document.removeEventListener("keydown", handleEscape);
+        };
+    }, []);
 
-              if (checkOut <= nextCheckIn) {
-                const tomorrow = new Date(`${nextCheckIn}T00:00:00`);
-                tomorrow.setDate(tomorrow.getDate() + 1);
+    function handleDatesChange(newCheckIn, newCheckOut) {
+        setCheckIn(newCheckIn);
+        setCheckOut(newCheckOut);
+        setError("");
+    }
 
-                setCheckOut(
-                  [
-                    tomorrow.getFullYear(),
-                    String(tomorrow.getMonth() + 1).padStart(2, "0"),
-                    String(tomorrow.getDate()).padStart(2, "0"),
-                  ].join("-")
-                );
-              }
-            }}
-            className="h-12 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-          />
-        </label>
+    function handleGuestsChange(value) {
+        setAdults(value.adults);
+        setChildren(value.children);
+    }
 
-        <label className="flex min-w-0 flex-col gap-2">
-          <span className="text-sm font-medium text-slate-700">
-            Check-out
-          </span>
-          <input
-            type="date"
-            value={checkOut}
-            min={checkIn}
-            required
-            onChange={(event) => setCheckOut(event.target.value)}
-            className="h-12 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-          />
-        </label>
+    function handleSearch() {
+        if (!checkIn || !checkOut) {
+            setError("Please select your check-in and check-out dates.");
+            return;
+        }
 
-        <div className="relative">
-          <span className="mb-2 block text-sm font-medium text-slate-700">
-            Guests
-          </span>
+        if (checkOut <= checkIn) {
+            setError("Check-out must be after check-in.");
+            return;
+        }
 
-          <button
-            type="button"
-            aria-expanded={guestsOpen}
-            onClick={() => setGuestsOpen((open) => !open)}
-            className="flex h-12 w-full items-center justify-between gap-3 rounded-lg border border-slate-300 px-3 text-left outline-none hover:border-blue-500 focus:ring-2 focus:ring-blue-100"
-          >
-            
-<span className="min-w-0">
-  <span className="block truncate text-sm font-medium text-slate-900">
-    1 Room · {totalGuests} Guests
-  </span>
-  <span className="block truncate text-xs text-slate-500">
-    {guests.adults} Adults · {guests.children} Children
-  </span>
-</span>
+        setError("");
+        setActivePopup(null);
 
+        onSearch?.({
+            checkIn,
+            checkOut,
+            adults,
+            children,
+        });
+    }
 
-            <svg
-              className={`h-4 w-4 shrink-0 transition-transform ${
-                guestsOpen ? "rotate-180" : ""
-              }`}
-              viewBox="0 0 20 20"
-              fill="none"
-              aria-hidden="true"
+    return (
+        <div className="w-full" ref={containerRef}>
+            <div
+                className="relative z-30 mx-auto grid w-full max-w-7xl grid-cols-1 gap-2 rounded-2xl border p-3 shadow-sm md:grid-cols-[45fr_35fr_20fr] md:gap-0 md:p-3"
+                style={{
+                    backgroundColor: COLORS.background,
+                    borderColor: `${COLORS.foreground}20`,
+                }}
             >
-              <path
-                d="m5 7.5 5 5 5-5"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-
-          {guestsOpen && (
-            <>
-              <button
-                type="button"
-                aria-label="Close guest options"
-                className="fixed inset-0 z-10 cursor-default"
-                onClick={() => setGuestsOpen(false)}
-              />
-
-              <div className="absolute right-0 top-full z-20 mt-2 w-full min-w-[280px] rounded-xl border border-slate-200 bg-white p-4 shadow-xl sm:w-80">
-                {/* Adults */}
-                <div className="flex items-center justify-between gap-4 border-b border-slate-100 py-4">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">
-                      Adults
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Minimum 2
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      aria-label="Remove adult"
-                      disabled={guests.adults <= 2}
-                      onClick={() =>
-                        updateGuest("adults", -1, 2, 6)
-                      }
-                      className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 text-lg disabled:opacity-30"
-                    >
-                      −
-                    </button>
-
-                    <span className="w-5 text-center text-sm font-semibold">
-                      {guests.adults}
-                    </span>
-
-                    <button
-                      type="button"
-                      aria-label="Add adult"
-                      disabled={totalGuests >= 6}
-                      onClick={() =>
-                        updateGuest("adults", 1, 2, 6)
-                      }
-                      className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 text-lg disabled:opacity-30"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                {/* Children */}
-                <div className="flex items-center justify-between gap-4 py-4">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">
-                      Children
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Maximum 6 guests total
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      aria-label="Remove child"
-                      disabled={guests.children <= 0}
-                      onClick={() =>
-                        updateGuest("children", -1, 0, 4)
-                      }
-                      className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 text-lg disabled:opacity-30"
-                    >
-                      −
-                    </button>
-
-                    <span className="w-5 text-center text-sm font-semibold">
-                      {guests.children}
-                    </span>
-
-                    <button
-                      type="button"
-                      aria-label="Add child"
-                      disabled={totalGuests >= 6}
-                      onClick={() =>
-                        updateGuest("children", 1, 0, 4)
-                      }
-                      className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 text-lg disabled:opacity-30"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                <p className="text-xs text-slate-500">
-                  Maximum capacity: 6 guests for family suites; 3 for other rooms.
-                </p>
-
-                <button
-                  type="button"
-                  onClick={() => setGuestsOpen(false)}
-                  className="mt-3 h-10 w-full rounded-lg bg-slate-900 text-sm font-semibold text-white hover:bg-slate-700"
-                >
-                  Done
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="h-12 w-full rounded-lg bg-blue-600 px-6 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 md:min-w-[150px]"
+                {/* LEFT: DATE SELECTION — 45% */}
+                <div className="relative min-w-0 md:pr-3">
+                    
+{/* Date Selection — 20% Icon | 40% Check-in | 40% Check-out */}
+<button
+    type="button"
+    onClick={() =>
+        setActivePopup(activePopup === "dates" ? null : "dates")
+    }
+    aria-expanded={activePopup === "dates"}
+    aria-label={`Select dates. Check-in: ${formatDisplayDate(
+        checkIn
+    )}. Check-out: ${formatDisplayDate(checkOut)}`}
+    className="grid min-h-16 w-full grid-cols-[20%_40%_40%] items-center rounded-xl py-2 text-left transition hover:bg-black/5"
+>
+    {/* Left: Calendar icon — 20% */}
+    <span
+        className="flex h-full items-center justify-center"
+        aria-hidden="true"
+        style={{ color: COLORS.foreground }}
+    >
+        <svg
+            width="23"
+            height="23"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
         >
-          {loading ? "Checking..." : "Check Rooms"}
-        </button>
-      </div>
-    </form>
-  );
+            <rect x="3" y="5" width="18" height="16" rx="2" />
+            <path d="M16 3v4M8 3v4M3 10h18" />
+        </svg>
+    </span>
+
+    {/* Middle: Check-in — 40% */}
+    <span className="min-w-0 pl-2">
+        <span
+            className="block text-[10px] font-medium tracking-wide opacity-60 sm:text-xs"
+            style={{ color: COLORS.foreground }}
+        >
+            CHECK-IN
+        </span>
+
+        <span
+            className="mt-1 block truncate text-xs font-semibold sm:text-sm"
+            style={{ color: COLORS.foreground }}
+        >
+            {formatDisplayDate(checkIn)}
+        </span>
+    </span>
+
+    {/* Right: Check-out — 40% */}
+    <span className="min-w-0 pl-2">
+        <span
+            className="block text-[10px] font-medium tracking-wide opacity-60 sm:text-xs"
+            style={{ color: COLORS.foreground }}
+        >
+            CHECK-OUT
+        </span>
+
+        <span
+            className="mt-1 block truncate text-xs font-semibold sm:text-sm"
+            style={{ color: COLORS.foreground }}
+        >
+            {formatDisplayDate(checkOut)}
+        </span>
+    </span>
+</button>
+
+                </div>
+
+                {/* MIDDLE: GUEST SELECTION — 35% */}
+                <div
+                    className="relative min-w-0 md:border-l md:px-3"
+                    style={{ borderColor: `${COLORS.foreground}20` }}
+                >
+                    <button
+                        type="button"
+                        onClick={() =>
+                            setActivePopup(
+                                activePopup === "guests" ? null : "guests"
+                            )
+                        }
+                        aria-expanded={activePopup === "guests"}
+                        aria-label={`Select guests. ${adults} adults and ${children} children`}
+                        className="flex min-h-16 w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-black/5"
+                    >
+                        {/* Guest icon */}
+                        <span
+                            className="shrink-0"
+                            style={{ color: COLORS.foreground }}
+                            aria-hidden="true"
+                        >
+                            <svg
+                                width="25"
+                                height="25"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.6"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M2 21v-2a7 7 0 0 1 14 0v2" />
+                                <path d="M16 3.5a4 4 0 0 1 0 7.5M19 14a6 6 0 0 1 3 5v2" />
+                            </svg>
+                        </span>
+
+                        <span className="min-w-0 flex-1">
+                            <span
+                                className="block text-xs font-medium opacity-60"
+                                style={{ color: COLORS.foreground }}
+                            >
+                                GUESTS
+                            </span>
+
+                            <span
+                                className="mt-1 block truncate text-sm font-semibold"
+                                style={{ color: COLORS.foreground }}
+                            >
+                                {adults} adults, {children} children
+                            </span>
+                        </span>
+
+                        {/* Dropdown arrow */}
+                        <svg
+                            className="shrink-0"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                            style={{ color: COLORS.foreground }}
+                        >
+                            <path d="m6 9 6 6 6-6" />
+                        </svg>
+                    </button>
+                </div>
+
+                {/* RIGHT: SEARCH BUTTON — 20% */}
+                <div
+                    className="flex min-w-0 items-stretch md:border-l md:pl-3"
+                    style={{ borderColor: `${COLORS.foreground}20` }}
+                >
+                    <button
+                        type="button"
+                        onClick={handleSearch}
+                        className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-bold transition hover:brightness-95 active:scale-[0.99] sm:px-5"
+                        style={{
+                            backgroundColor: COLORS.accent,
+                            color: COLORS.foreground,
+                        }}
+                    >
+                        <svg
+                            width="19"
+                            height="19"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                        >
+                            <circle cx="11" cy="11" r="7" />
+                            <path d="m20 20-4-4" />
+                        </svg>
+
+                        <span>Search Rooms</span>
+                    </button>
+                </div>
+
+                {/* DATE CALENDAR POPUP */}
+                {activePopup === "dates" && (
+                    <div className="absolute left-0 top-full z-50 mt-2 w-full max-w-sm">
+                        <DateRangeCalendar
+                            checkIn={checkIn}
+                            checkOut={checkOut}
+                            onChange={handleDatesChange}
+                            onClose={() => setActivePopup(null)}
+                        />
+                    </div>
+                )}
+
+                {/* GUEST SELECTOR POPUP */}
+                {activePopup === "guests" && (
+                    <div className="absolute right-0 top-full z-50 mt-2 w-full max-w-sm">
+                        <GuestSelector
+                            adults={adults}
+                            children={children}
+                            onChange={handleGuestsChange}
+                            onClose={() => setActivePopup(null)}
+                        />
+                    </div>
+                )}
+            </div>
+
+            {/* VALIDATION ERROR */}
+            {error && (
+                <p
+                    role="alert"
+                    className="mt-2 text-sm font-medium"
+                    style={{ color: "#b42318" }}
+                >
+                    {error}
+                </p>
+            )}
+        </div>
+    );
 }
