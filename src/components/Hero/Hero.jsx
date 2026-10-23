@@ -5,7 +5,7 @@ export default function Hero() {
       {/* Hero Image */}
       <div className="absolute inset-0 h-full w-full">
         <img
-          src="/images/Hero2.jpeg"
+          src="/images/Hero.jpeg"
           alt="SU Villa by the Creek"
           className="h-full w-full object-cover"
         />
