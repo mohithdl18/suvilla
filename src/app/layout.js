@@ -26,10 +26,10 @@ export const metadata = {
   },
 
   openGraph: {
-    title: "Your Website Title",
-    description: "Your website description.",
-    url: "https://yourdomain.com",
-    siteName: "Your Website",
+    title: "SU VILLA | BY THE CREEK",
+    description: "Experience a peaceful luxury stay surrounded by the lush green hills of Sakleshpur.",
+    url: "https://www.suvilla.in/",
+    siteName: "SU VILLA | BY THE CREEK",
     images: [
       {
         url: "images/og-image.png",
