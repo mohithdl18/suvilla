@@ -53,7 +53,7 @@ export default function Navbar() {
 
           {/* Right — Book Now */}
           <a
-            href="https://wa.me/919976124365?text=Hey%20SU%20VILLA%21%20I%E2%80%99d%20love%20to%20enquire%20about%20your%20stay%20and%20booking%20details.%20Thank%20you%21"
+            href="/bookings"
             target="_blank"
             rel="noopener noreferrer"
             className="ml-auto mr-10 flex h-20 w-[180px] shrink-0 cursor-pointer items-center justify-center font-body text-sm uppercase tracking-[0.15em] text-primary transition-colors duration-300 hover:!text-[#E4B441]"
