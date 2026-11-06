@@ -1,0 +1,111 @@
+
+[
+  {
+    "id": 1,
+    "name": "Chamundeshwary Temple",
+    "distance": "Approx. 1-3 km",
+    "image": "/images/manjarabad.webp",
+    "alt": "Chamundeshwary Temple in the heart of Sakleshpur",
+    "description": "A small local temple close to the Bage area; suitable for a brief cultural stop.",
+    "tip": "Dress respectfully and check local access or timings."
+  },
+  {
+    "id": 2,
+    "name": "Sri Deviramma Temple",
+    "distance": "Approx. 3-8 km",
+    "image": "/images/destination4.jpg",
+    "alt": "Sri Deviramma Temple in the Ballupet area",
+    "description": "A local temple in the Ballupet area for visitors interested in regional worship sites.",
+    "tip": "Confirm opening and festival timings locally."
+  },
+  {
+    "id": 3,
+    "name": "Manjarabad Fort",
+    "distance": "Approx. 5-12 km",
+    "image": "/images/bisle-ghat.webp",
+    "alt": "Manjarabad Fort overlooking the surrounding landscape",
+    "description": "The famous star-shaped fort built under Tipu Sultan in 1792, with hilltop views and distinctive military architecture.",
+    "tip": "Visit in daylight; wear grippy shoes for steps and uneven stone."
+  },
+  {
+    "id": 4,
+    "name": "Hole Malleshwara Swamy Temple",
+    "distance": "Approx. 6-12 km",
+    "image": "/images/destination3.jpg",
+    "alt": "Hole Malleshwara Swamy Temple in a riverside setting",
+    "description": "A riverside temple setting near the Hemavathi River, offering a quieter heritage stop.",
+    "tip": "Check current temple hours and dress respectfully."
+  },
+  {
+    "id": 5,
+    "name": "Arekere Sunset Viewpoint",
+    "distance": "Approx. 10–15 km",
+    "image": "/images/manjehalli-falls.jpg",
+    "alt": "Sunset view from Arekere",
+    "description": "A countryside viewpoint for open skies and rolling green scenery.",
+    "tip": "Only stop where parking is safe; avoid foggy or rainy conditions."
+  },
+  {
+    "id": 6,
+    "name": "Donigal Small Falls",
+    "distance": "Approx. 10–18 km",
+    "image": "/images/hadlu-waterfalls.jpg",
+    "alt": "Donigal Small Falls among the forest greenery",
+    "description": "A small waterfall area along the green countryside, particularly seasonal during rainy months.",
+    "tip": "Roadside access may be limited; stay away from slippery rocks and moving water."
+  },
+  {
+    "id": 7,
+    "name": "Hadlu Waterfall",
+    "distance": "Approx. 10–22 km",
+    "image": "/images/agni-gudda.jpg",
+    "alt": "Hadlu Waterfall in the countryside",
+    "description": "A nature outing often involving a walk through plantation or forest-edge terrain.",
+    "tip": "Ask locally about permission and trail condition; skip in heavy rain."
+  },
+  {
+    "id": 8,
+    "name": "Manjehalli Falls",
+    "distance": "Approx. 12-22 km",
+    "image": "/images/jenukal-gudda.jpg",
+    "alt": "Mountain scenery around Manjehalli Falls",
+    "description": "A popular waterfall stop with lush surroundings and seasonal flow.",
+    "tip": "Do not climb wet rocks or enter strong water."
+  },
+  {
+    "id": 9,
+    "name": "Magajahalli Abbi Falls",
+    "distance": "Approx. 18–27 km",
+    "image": "/images/magajahalli-falls.jpg",
+    "alt": "Magajahalli Abbi Falls amid lush greenery",
+    "description": "A scenic cascade near Devaladakere/Hanbal, often visited for its greenery and water flow.",
+    "tip": "Ask locally about access, as the approach may involve uneven terrain."
+  },
+  {
+    "id": 10,
+    "name": "Mookanamane Abbi Falls",
+    "distance": "Approx. 20-30 km",
+    "image": "/images/bettada-byraveshwara-temple.jpg",
+    "alt": "Mookanamane Abbi Falls in a scenic setting",
+    "description": "A more adventurous waterfall outing with uneven terrain and a downhill approach in some routes.",
+    "tip": "Check trail difficulty locally; not ideal in heavy rain or for anyone with mobility limitations."
+  },
+  {
+    "id": 11,
+    "name": "Coffee plantation walk",
+    "distance": "Approx. 5-25 km",
+    "image": "/images/sakleshwara-temple.jpg",
+    "alt": "Coffee plantation walk through lush greenery",
+    "description": "Learn about coffee, pepper and local plantation life through a hosted walk.",
+    "tip": "Book in advance; private estates do not allow unrestricted entry."
+  },
+  {
+    "id": 12,
+    "name": "Sakleshpur town & local market",
+    "distance": "Approx. 2-8 km",
+    "image": "/images/hemavathi-reservoir.jpg",
+    "alt": "The broad waters and surrounding landscape of Hemavathi Reservoir",
+    "description": "A convenient stop for local snacks, supplies and a feel for the town.",
+    "tip": "Opening hours vary; carry cash for smaller shops."
+  }
+]

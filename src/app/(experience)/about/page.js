@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Footer from "@/components/Footer/Footer";
 import { House } from "lucide-react";
+import NearbyPlaces from "@/components/About/NearbyPlaces";
 
 const destinations = [
   {
@@ -280,6 +281,8 @@ export default function About() {
         </div>
 
       </section>
+
+      <NearbyPlaces />
 
 
       {/* ================= CLOSING ================= */}

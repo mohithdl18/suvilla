@@ -1,100 +1,62 @@
-import { timingSafeEqual } from "node:crypto";
-import { NextResponse } from "next/server";
-import { createAdminSession } from "@/lib/auth";
-
-
-
-const SESSION_COOKIE = "suvilla_admin_session";
-const SESSION_DURATION = 8 * 60 * 60;
-
-function safeCompare(value, expected) {
-    const valueBuffer = Buffer.from(value);
-    const expectedBuffer = Buffer.from(expected);
-
-    if (valueBuffer.length !== expectedBuffer.length) {
-        return false;
-    }
-
-    return timingSafeEqual(valueBuffer, expectedBuffer);
-}
+import { getDb } from "@/lib/mongodb";
+import {
+  jsonError,
+  jsonOk,
+  readJsonBody,
+  assertSameOrigin,
+  enforceRateLimit,
+  rateLimit,
+  RequestError,
+} from "@/lib/security";
+import {
+  adminConfigured,
+  adminUsername,
+  checkCredentials,
+  createAdminSession,
+  setAdminCookie,
+  audit,
+} from "@/lib/adminAuth";
 
 export async function POST(request) {
-    try {
-        const adminUsername = process.env.ADMIN_USERNAME;
-        const adminPassword = process.env.ADMIN_PASSWORD;
-        const sessionSecret = process.env.ADMIN_SESSION_SECRET;
+  try {
+    const blocked = assertSameOrigin(request);
+    if (blocked) return blocked;
 
-        if (!adminUsername || !adminPassword || !sessionSecret) {
-            console.error(
-                "Admin authentication environment variables are missing."
-            );
-
-            return NextResponse.json(
-                { message: "Admin login is not configured." },
-                { status: 500 }
-            );
-        }
-
-        let body;
-
-        try {
-            body = await request.json();
-        } catch {
-            return NextResponse.json(
-                { message: "Invalid request." },
-                { status: 400 }
-            );
-        }
-
-        const username =
-            typeof body?.username === "string"
-                ? body.username.trim()
-                : "";
-
-        const password =
-            typeof body?.password === "string"
-                ? body.password
-                : "";
-
-        if (!username || !password) {
-            return NextResponse.json(
-                { message: "Please enter your username and password." },
-                { status: 400 }
-            );
-        }
-
-        const validUsername = safeCompare(username, adminUsername);
-        const validPassword = safeCompare(password, adminPassword);
-
-        if (!validUsername || !validPassword) {
-            return NextResponse.json(
-                { message: "Invalid username or password." },
-                { status: 401 }
-            );
-        }
-
-        const token = createAdminSession(username, sessionSecret);
-
-        const response = NextResponse.json({
-            success: true,
-            message: "Login successful.",
-        });
-
-        response.cookies.set(SESSION_COOKIE, token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            path: "/",
-            maxAge: SESSION_DURATION,
-        });
-
-        return response;
-    } catch (error) {
-        console.error("Admin login error:", error);
-
-        return NextResponse.json(
-            { message: "Unable to process login. Please try again." },
-            { status: 500 }
-        );
+    if (!adminConfigured()) {
+      return jsonError("Admin access is not configured.", 503);
     }
+
+    const db = await getDb();
+    // 5 attempts per 15 min per IP, and 30/hour overall (slows distributed guessing).
+    const limited = await enforceRateLimit(db, request, "admin-login", 5, 15 * 60 * 1000);
+    if (limited) return limited;
+    if (!(await rateLimit(db, "admin-login-global", 30, 60 * 60 * 1000))) {
+      return jsonError("Too many login attempts. Try again later.", 429);
+    }
+
+    const { username, password } = await readJsonBody(request, 1024);
+    if (typeof username !== "string" || typeof password !== "string" ||
+        username.length > 100 || password.length > 200) {
+      return jsonError("Invalid username or password.", 401);
+    }
+
+    if (!checkCredentials(username.trim(), password)) {
+      await audit(request, { username: username.slice(0, 50) }, "login_failed");
+      // Small fixed delay to blunt automated guessing.
+      await new Promise((r) => setTimeout(r, 600));
+      return jsonError("Invalid username or password.", 401);
+    }
+
+    const { token, expiresAt } = await createAdminSession(request, adminUsername());
+    await audit(request, { username: adminUsername() }, "login");
+    return setAdminCookie(
+      jsonOk({ success: true, expiresAt: expiresAt.toISOString() }),
+      token,
+      expiresAt
+    );
+  } catch (error) {
+    if (error instanceof RequestError) return jsonError(error.message, error.status);
+    console.error("Admin login failed:", error);
+    return jsonError("Unable to log in right now.", 500);
+  }
 }

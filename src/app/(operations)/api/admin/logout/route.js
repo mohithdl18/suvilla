@@ -1,21 +1,15 @@
-import { NextResponse } from "next/server";
+import { jsonOk, assertSameOrigin } from "@/lib/security";
+import { destroyAdminSession, clearAdminCookie, getAdminSession, audit } from "@/lib/adminAuth";
 
-const SESSION_COOKIE = "suvilla_admin_session";
-
-export async function POST() {
-    const response = NextResponse.json({
-        success: true,
-        message: "Logged out successfully.",
-    });
-
-    response.cookies.set(SESSION_COOKIE, "", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        path: "/",
-        expires: new Date(0),
-        maxAge: 0,
-    });
-
-    return response;
+export async function POST(request) {
+  const blocked = assertSameOrigin(request);
+  if (blocked) return blocked;
+  try {
+    const session = await getAdminSession(request);
+    if (session) await audit(request, session, "logout");
+    await destroyAdminSession(request);
+  } catch (error) {
+    console.error("Admin logout failed:", error);
+  }
+  return clearAdminCookie(jsonOk({ success: true }));
 }

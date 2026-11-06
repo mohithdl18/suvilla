@@ -1,259 +1,134 @@
 "use client";
 
-import { useState } from "react";
-
-const COLORS = {
-    background: "#F7FAEE",
-    foreground: "#052a50",
-    accent: "#e4b441",
-};
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    async function handleSubmit(event) {
-        event.preventDefault();
+  // Already logged in → go straight to the dashboard.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/admin/session", { cache: "no-store" })
+      .then((r) => {
+        if (!cancelled && r.ok) router.replace("/admin");
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
-        setError("");
+  async function handleSubmit(event) {
+    event.preventDefault();
+    if (isSubmitting) return;
+    setError("");
 
-        if (!username.trim() || !password) {
-            setError("Please enter your username and password.");
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-            const response = await fetch("/api/admin/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    username: username.trim(),
-                    password,
-                }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                setError(data.message || "Invalid username or password.");
-                return;
-            }
-
-            window.location.href = "/admin";
-        } catch {
-            setError("Unable to connect. Please try again.");
-        } finally {
-            setLoading(false);
-        }
+    if (!username.trim() || !password) {
+      setError("Please enter your username and password.");
+      return;
     }
 
-    return (
-        <main
-            className="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-12"
-            style={{
-                backgroundColor: COLORS.background,
-                color: COLORS.foreground,
-            }}
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: username.trim(), password }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) {
+        setError(data.message || "Invalid username or password.");
+        setPassword("");
+        return;
+      }
+      router.replace("/admin");
+    } catch {
+      setError("Unable to reach the server. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <main
+      className="flex min-h-screen items-center justify-center px-4 py-10"
+      style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
+    >
+      <div className="w-full max-w-md">
+        <div className="mb-8 text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#b08a28]">
+            SU VILLA
+          </p>
+          <h1 className="font-body mt-2 text-5xl">Admin</h1>
+          <p className="mt-3 text-sm opacity-70">Sign in to manage bookings and rooms.</p>
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-3xl border border-[#052a50]/10 bg-white p-6 shadow-sm sm:p-8"
+          noValidate
         >
-            {/* Decorative background */}
-            <div
-                aria-hidden="true"
-                className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full opacity-20 blur-3xl"
-                style={{ backgroundColor: COLORS.accent }}
+          <label htmlFor="username" className="text-sm font-semibold">
+            Username
+          </label>
+          <input
+            id="username"
+            name="username"
+            autoComplete="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            disabled={isSubmitting}
+            className="mt-2 w-full rounded-xl border border-[#052a50]/15 bg-[#F7FAEE] px-4 py-3 text-sm outline-none transition focus:border-[#e4b441] disabled:opacity-60"
+          />
+
+          <label htmlFor="password" className="mt-5 block text-sm font-semibold">
+            Password
+          </label>
+          <div className="relative mt-2">
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isSubmitting}
+              className="w-full rounded-xl border border-[#052a50]/15 bg-[#F7FAEE] px-4 py-3 pr-20 text-sm outline-none transition focus:border-[#e4b441] disabled:opacity-60"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-3 py-1.5 text-xs font-semibold text-[#052a50]/70 hover:bg-[#052a50]/5"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
 
-            <div
-                aria-hidden="true"
-                className="pointer-events-none absolute -bottom-40 -left-32 h-96 w-96 rounded-full opacity-10 blur-3xl"
-                style={{ backgroundColor: COLORS.foreground }}
-            />
+          {error && (
+            <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </p>
+          )}
 
-            <section className="relative z-10 w-full max-w-md">
-                {/* Brand */}
-                <div className="mb-8 text-center">
-                    <p
-                        className="font-display text-5xl"
-                        style={{ color: COLORS.foreground }}
-                    >
-                        SU VILLA
-                    </p>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="mt-6 w-full rounded-xl bg-[#052a50] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#e4b441] hover:text-[#052a50] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSubmitting ? "Signing in..." : "Sign in"}
+          </button>
 
-                    <div
-                        className="mx-auto mt-4 h-px w-16"
-                        style={{ backgroundColor: COLORS.accent }}
-                    />
-
-                    <p className="mt-4 text-xs font-semibold uppercase tracking-[0.3em] opacity-60">
-                        Administration Portal
-                    </p>
-                </div>
-
-                {/* Login card */}
-                <div
-                    className="rounded-2xl border p-7 shadow-xl sm:p-9"
-                    style={{
-                        backgroundColor: "#FFFFFF",
-                        borderColor: `${COLORS.foreground}15`,
-                        boxShadow: "0 24px 70px rgba(5, 42, 80, 0.09)",
-                    }}
-                >
-                    <div className="mb-7">
-                        <h1 className="text-2xl font-semibold tracking-tight">
-                            Welcome back
-                        </h1>
-
-                        <p className="mt-2 text-sm leading-6 opacity-65">
-                            Sign in to manage your bookings and resort
-                            operations.
-                        </p>
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        {/* Username */}
-                        <div>
-                            <label
-                                htmlFor="username"
-                                className="mb-2 block text-sm font-medium"
-                            >
-                                Username
-                            </label>
-
-                            <input
-                                id="username"
-                                name="username"
-                                type="text"
-                                autoComplete="username"
-                                value={username}
-                                onChange={(event) =>
-                                    setUsername(event.target.value)
-                                }
-                                placeholder="Enter your username"
-                                required
-                                disabled={loading}
-                                className="h-12 w-full rounded-xl border px-4 text-sm outline-none transition focus:ring-2 disabled:opacity-60"
-                                style={{
-                                    backgroundColor: COLORS.background,
-                                    borderColor: `${COLORS.foreground}20`,
-                                    color: COLORS.foreground,
-                                    "--tw-ring-color": `${COLORS.accent}90`,
-                                }}
-                            />
-                        </div>
-
-                        {/* Password */}
-                        <div>
-                            <div className="mb-2 flex items-center justify-between">
-                                <label
-                                    htmlFor="password"
-                                    className="block text-sm font-medium"
-                                >
-                                    Password
-                                </label>
-                            </div>
-
-                            <div className="relative">
-                                <input
-                                    id="password"
-                                    name="password"
-                                    type={showPassword ? "text" : "password"}
-                                    autoComplete="current-password"
-                                    value={password}
-                                    onChange={(event) =>
-                                        setPassword(event.target.value)
-                                    }
-                                    placeholder="Enter your password"
-                                    required
-                                    disabled={loading}
-                                    className="h-12 w-full rounded-xl border px-4 pr-16 text-sm outline-none transition focus:ring-2 disabled:opacity-60"
-                                    style={{
-                                        backgroundColor: COLORS.background,
-                                        borderColor: `${COLORS.foreground}20`,
-                                        color: COLORS.foreground,
-                                        "--tw-ring-color": `${COLORS.accent}90`,
-                                    }}
-                                />
-
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setShowPassword((previous) => !previous)
-                                    }
-                                    disabled={loading}
-                                    className="absolute inset-y-0 right-3 text-xs font-semibold opacity-65 transition hover:opacity-100"
-                                    aria-label={
-                                        showPassword
-                                            ? "Hide password"
-                                            : "Show password"
-                                    }
-                                >
-                                    {showPassword ? "Hide" : "Show"}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Error message */}
-                        {error && (
-                            <div
-                                role="alert"
-                                className="rounded-lg border px-3 py-3 text-sm"
-                                style={{
-                                    backgroundColor: "#FEF2F2",
-                                    borderColor: "#FECACA",
-                                    color: "#B42318",
-                                }}
-                            >
-                                {error}
-                            </div>
-                        )}
-
-                        {/* Submit */}
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
-                            style={{
-                                backgroundColor: COLORS.accent,
-                                color: COLORS.foreground,
-                            }}
-                        >
-                            {loading ? (
-                                <>
-                                    <span
-                                        className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-                                        aria-hidden="true"
-                                    />
-                                    Signing in...
-                                </>
-                            ) : (
-                                <>
-                                    Sign in
-                                    <span aria-hidden="true">→</span>
-                                </>
-                            )}
-                        </button>
-                    </form>
-
-                    <div
-                        className="mt-7 border-t pt-5 text-center"
-                        style={{ borderColor: `${COLORS.foreground}12` }}
-                    >
-                        <p className="text-xs opacity-50">
-                            Restricted access · Authorized personnel only
-                        </p>
-                    </div>
-                </div>
-
-                <p className="mt-6 text-center text-xs opacity-50">
-                    © {new Date().getFullYear()} SU VILLA. All rights reserved.
-                </p>
-            </section>
-        </main>
-    );
+          <p className="mt-4 text-center text-xs opacity-55">
+            You’ll be signed out automatically after 24 hours.
+          </p>
+        </form>
+      </div>
+    </main>
+  );
 }

@@ -1,135 +1,229 @@
+
 import { NextResponse } from "next/server";
-import { getDatabase } from "@/lib/mongodb";
-
+import { getDb } from "@/lib/mongodb";
+import { getAvailabilityByDateRange } from "@/data/room_availabilty";
+import rooms from "@/data/rooms.json";
 import {
-    validateBookingDates,
-    getStayDates,
-    validateRoom,
-} from "@/logic/booking";
+  readJsonBody,
+  assertSameOrigin,
+  enforceRateLimit,
+  readSession,
+  deriveTempId,
+  RequestError,
+  jsonError,
+} from "@/lib/security";
 
-export async function GET(request) {
-    try {
-        const { searchParams } = new URL(request.url);
+function isValidDateString(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
 
-        const checkIn = searchParams.get("checkIn");
-        const checkOut = searchParams.get("checkOut");
-        const roomId = searchParams.get("roomId");
+  const date = new Date(`${value}T00:00:00.000Z`);
 
-        if (!checkIn || !checkOut) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: "Check-in and checkout dates are required.",
-                },
-                { status: 400 }
-            );
-        }
+  return (
+    !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value
+  );
+}
 
-        if (!validateBookingDates(checkIn, checkOut)) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: "Invalid check-in or checkout dates.",
-                },
-                { status: 400 }
-            );
-        }
+function getNights(checkIn, checkOut) {
+  const start = new Date(`${checkIn}T00:00:00.000Z`);
+  const end = new Date(`${checkOut}T00:00:00.000Z`);
 
-        if (roomId && !validateRoom(roomId)) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: "Invalid room ID.",
-                },
-                { status: 400 }
-            );
-        }
+  return Math.round((end - start) / (24 * 60 * 60 * 1000));
+}
 
-        const db = await getDatabase();
-        const availabilityCollection = db.collection("availability");
+function getStayDates(checkIn, checkOut) {
+  const dates = [];
+  const current = new Date(`${checkIn}T00:00:00.000Z`);
+  const end = new Date(`${checkOut}T00:00:00.000Z`);
 
-        // Get all nights between check-in and checkout.
-        // The checkout date itself is excluded by getStayDates().
-        const dates = getStayDates(checkIn, checkOut);
+  while (current < end) {
+    dates.push(current.toISOString().slice(0, 10));
+    current.setUTCDate(current.getUTCDate() + 1);
+  }
 
-        // Fetch both customer bookings and admin-blocked rooms.
-        const records = await availabilityCollection
-            .find(
-                { date: { $in: dates } },
-                {
-                    projection: {
-                        _id: 0,
-                        date: 1,
-                        booked_rooms: 1,
-                        blocked_rooms: 1,
-                    },
-                }
-            )
-            .toArray();
+  return dates;
+}
 
-        // Combine unavailable room IDs for each date.
-        const unavailableRoomsByDate = Object.fromEntries(
-            records.map((record) => {
-                const bookedRooms = Array.isArray(record.booked_rooms)
-                    ? record.booked_rooms
-                    : [];
+export async function POST(request) {
+  try {
+    const blocked = assertSameOrigin(request);
+    if (blocked) return blocked;
 
-                const blockedRooms = Array.isArray(record.blocked_rooms)
-                    ? record.blocked_rooms
-                    : [];
+    const body = await readJsonBody(request, 2048);
+    const { checkIn, checkOut } = body;
 
-                return [
-                    record.date,
-                    [...new Set([...bookedRooms, ...blockedRooms])],
-                ];
-            })
-        );
+    // "Your own hold" is decided by the HttpOnly session cookie.
+    const sid = readSession(request);
+    const TempID = sid ? deriveTempId(sid, body.TempID) : null;
 
-        const rooms = ["Room1", "Room2", "Room3", "Room4"];
-
-        const roomAvailability = rooms.map((id) => {
-            const unavailable = dates.some((date) =>
-                (unavailableRoomsByDate[date] || []).includes(id)
-            );
-
-            return {
-                roomId: id,
-                available: !unavailable,
-            };
-        });
-
-        // Return availability for one selected room.
-        if (roomId) {
-            const selectedRoom = roomAvailability.find(
-                (room) => room.roomId === roomId
-            );
-
-            return NextResponse.json({
-                success: true,
-                roomId,
-                available: selectedRoom.available,
-                checkIn,
-                checkOut,
-            });
-        }
-
-        // Return availability for all four rooms.
-        return NextResponse.json({
-            success: true,
-            checkIn,
-            checkOut,
-            nights: dates.length,
-            rooms: roomAvailability,
-        });
-    } catch (error) {
-        console.error("Availability API error:", error);
-
-        return NextResponse.json(
-            {
-                success: false,
-                message: "Unable to retrieve room availability.",
-            },
-            { status: 500 }
-        );
+    if (
+      !isValidDateString(checkIn) ||
+      !isValidDateString(checkOut)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Please provide valid check-in and checkout dates.",
+        },
+        { status: 400 }
+      );
     }
+
+    const nights = getNights(checkIn, checkOut);
+
+    if (nights < 1 || nights > 10) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Your stay must be between 1 and 10 nights.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const stayDates = getStayDates(checkIn, checkOut);
+    const now = new Date();
+
+    const db = await getDb();
+    const limited = await enforceRateLimit(db, request, "availability", 60, 60 * 1000);
+    if (limited) return limited;
+
+    const availabilityRecords = await getAvailabilityByDateRange(checkIn, checkOut);
+
+    const availabilityByDate = new Map(
+      availabilityRecords.map((record) => [
+        record.date,
+        {
+          bookedRooms: Array.isArray(record.booked_rooms)
+            ? record.booked_rooms
+            : [],
+          blockedRooms: Array.isArray(record.blocked_rooms)
+            ? record.blocked_rooms
+            : [],
+          temporaryHolds: Array.isArray(record.temporary_holds)
+            ? record.temporary_holds
+            : [],
+        },
+      ])
+    );
+
+    // Also read active holds directly from temp_books.
+    // This protects availability even if a per-date hold entry is missing.
+    const activeHolds = await db
+      .collection("temp_books")
+      .find({
+        expiresAt: { $gt: now },
+        stayDates: { $in: stayDates },
+      })
+      .project({
+        _id: 0,
+        TempID: 1,
+        roomId: 1,
+        expiresAt: 1,
+        stayDates: 1,
+      })
+      .toArray();
+
+    const availableRooms = rooms.filter((room) =>
+      stayDates.every((date) => {
+        const record = availabilityByDate.get(date);
+
+        if (record) {
+          if (
+            record.bookedRooms.includes(room.id) ||
+            record.blockedRooms.includes(room.id)
+          ) {
+            return false;
+          }
+
+          const heldInAvailability = record.temporaryHolds.some(
+            (hold) => {
+              if (hold.roomId !== room.id) return false;
+
+              const expiresAt = new Date(hold.expiresAt).getTime();
+
+              if (
+                !Number.isFinite(expiresAt) ||
+                expiresAt <= Date.now()
+              ) {
+                return false;
+              }
+
+              // A customer can see their own temporary hold.
+              return !TempID || hold.TempID !== TempID;
+            }
+          );
+
+          if (heldInAvailability) return false;
+        }
+
+        // A different TempID holding this room for any night
+        // makes the room unavailable for the requested stay.
+        const heldInTempBooks = activeHolds.some((hold) => {
+          if (hold.roomId !== room.id) return false;
+
+          if (TempID && hold.TempID === TempID) {
+            return false;
+          }
+
+          const expiresAt = new Date(hold.expiresAt).getTime();
+
+          if (
+            !Number.isFinite(expiresAt) ||
+            expiresAt <= Date.now()
+          ) {
+            return false;
+          }
+
+          return Array.isArray(hold.stayDates)
+            ? hold.stayDates.includes(date)
+            : false;
+        });
+
+        return !heldInTempBooks;
+      })
+    );
+
+    const availableRoomIds = availableRooms.map((room) => room.id);
+
+    const unavailableRoomIds = rooms
+      .filter((room) => !availableRoomIds.includes(room.id))
+      .map((room) => room.id);
+
+    // Nights the admin marked as long weekend (priced higher).
+    const longWeekendDates = availabilityRecords
+      .filter((r) => r.long_weekend === true && r.date >= checkIn && r.date < checkOut)
+      .map((r) => r.date)
+      .sort();
+
+    return NextResponse.json({
+      success: true,
+      checkIn,
+      checkOut,
+      nights,
+      longWeekendDates,
+      availableRoomIds,
+      availableRooms,
+      unavailableRoomIds,
+      message:
+        availableRooms.length > 0
+          ? "Availability checked successfully."
+          : "Sorry, no rooms are available for these dates.",
+    });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      return jsonError(error.message, error.status);
+    }
+    console.error("Availability check failed:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unable to check availability. Please try again.",
+      },
+      { status: 500 }
+    );
+  }
 }

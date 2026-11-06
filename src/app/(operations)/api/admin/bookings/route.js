@@ -1,52 +1,17 @@
-import { NextResponse } from "next/server";
+import { jsonError, jsonOk } from "@/lib/security";
+import { requireAdmin } from "@/lib/adminAuth";
+import { listBookings } from "@/lib/adminData";
 
-import { getDatabase } from "@/lib/mongodb";
-import { requireAdmin } from "@/lib/requireAdmin";
-
-export async function GET() {
-    const auth = await requireAdmin();
-
-    if (!auth.authorized) {
-        return auth.response;
-    }
-
-    try {
-        const db = await getDatabase();
-
-        const bookings = await db
-            .collection("bookings")
-            .find({})
-            .sort({ createdAt: -1, _id: -1 })
-            .project({
-                _id: 0,
-                bookingId: 1,
-                roomId: 1,
-                checkIn: 1,
-                checkOut: 1,
-                nights: 1,
-                customer: 1,
-                guests: 1,
-                addons: 1,
-                pricing: 1,
-                status: 1,
-                paymentStatus: 1,
-                createdAt: 1,
-            })
-            .toArray();
-
-        return NextResponse.json({
-            success: true,
-            bookings,
-        });
-    } catch (error) {
-        console.error("Admin bookings fetch failed:", error);
-
-        return NextResponse.json(
-            {
-                success: false,
-                message: "Unable to load bookings.",
-            },
-            { status: 500 }
-        );
-    }
+// GET /api/admin/bookings?page=1  (30 per page, newest first)
+export async function GET(request) {
+  const raw = Number(new URL(request.url).searchParams.get("page") || 1);
+  const page = Number.isInteger(raw) && raw > 0 && raw < 100000 ? raw : 1;
+  const { response } = await requireAdmin(request);
+  if (response) return response;
+  try {
+    return jsonOk({ success: true, ...(await listBookings(page, 30)) });
+  } catch (error) {
+    console.error("Admin bookings list failed:", error);
+    return jsonError("Unable to load bookings.", 500);
+  }
 }

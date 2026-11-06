@@ -1,32 +1,25 @@
+import { connection } from "next/server";
+import { getDb } from "@/lib/mongodb";
+import { hasBearerSecret } from "@/lib/security";
 
-import { NextResponse } from "next/server";
-import clientPromise from "@/lib/mongodb";
+// Health check. Disabled in production unless called with
+// "Authorization: Bearer $HEALTHCHECK_SECRET". Never reveals DB details.
+export async function GET(request) {
+  await connection(); // always evaluate per request, never prerender
+  const allowed =
+    process.env.NODE_ENV === "development" ||
+    hasBearerSecret(request, process.env.HEALTHCHECK_SECRET);
 
-export async function GET() {
-    try {
-        const client = await clientPromise;
+  if (!allowed) {
+    return Response.json({ success: false, message: "Not found." }, { status: 404 });
+  }
 
-        await client.db("admin").command({ ping: 1 });
-
-        return NextResponse.json({
-            success: true,
-            message: "MongoDB connection successful",
-            database:
-                process.env.MONGODB_DB || "suvilla_bookings",
-        });
-    } catch (error) {
-        console.error(
-            "MongoDB connection test failed:",
-            error.message
-        );
-
-        return NextResponse.json(
-            {
-                success: false,
-                message:
-                    "MongoDB connection failed. Check server logs.",
-            },
-            { status: 500 }
-        );
-    }
+  try {
+    const db = await getDb();
+    await db.command({ ping: 1 });
+    return Response.json({ success: true, message: "OK" }, { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    console.error("MongoDB health check failed:", error);
+    return Response.json({ success: false, message: "Database unavailable." }, { status: 503 });
+  }
 }

@@ -56,7 +56,7 @@ export default function RootLayout({ children }) {
       <body className={`${poppins.variable} ${ballet.variable}`}>
         {children}
 
-        <WhatsAppButton />
+        {/* <WhatsAppButton /> */}
         
       </body>
     </html>

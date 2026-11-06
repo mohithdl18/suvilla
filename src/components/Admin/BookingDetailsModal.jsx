@@ -1,478 +1,215 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import AdminModal from "./AdminModal";
+import StatusBadge from "./StatusBadge";
+import { adminFetch, formatMoney, formatDate, formatDateTime } from "@/lib/adminClient";
+import { invoiceLines, guestSummary } from "@/config/invoiceLines";
 
-const currencyFormatter = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-});
+const MEAL_LABEL = { lunch: "Lunch", dinner: "Dinner", lunchDinner: "Lunch + Dinner" };
 
-function currency(value) {
-    return currencyFormatter.format(Number(value) || 0);
+function Row({ label, value }) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-1.5 text-sm">
+      <span className="text-[#052a50]/60">{label}</span>
+      <span className="text-right font-medium break-all">{value || "—"}</span>
+    </div>
+  );
 }
 
-function formatDate(value) {
-    if (!value) return "—";
-
-    const [year, month, day] = String(value).split("-").map(Number);
-
-    if (!year || !month || !day) return value;
-
-    return new Date(year, month - 1, day).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-    });
+function Card({ title, children }) {
+  return (
+    <section className="rounded-2xl border border-[#052a50]/10 bg-white p-4 sm:p-5">
+      <h3 className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#b08a28]">{title}</h3>
+      {children}
+    </section>
+  );
 }
 
-function formatDateTime(value) {
-    if (!value) return "—";
+export default function BookingDetailsModal({ bookingId, onClose, onRequestCancel }) {
+  const [result, setResult] = useState({ id: null, booking: null, error: "" });
+  const [emailMsg, setEmailMsg] = useState({ id: null, text: "", busy: false });
 
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) return "—";
-
-    return date.toLocaleString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-}
-
-function Detail({ label, value }) {
-    return (
-        <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wider opacity-50">
-                {label}
-            </p>
-            <p className="mt-1 break-words text-sm font-medium">
-                {value === undefined || value === null || value === ""
-                    ? "—"
-                    : String(value)}
-            </p>
-        </div>
-    );
-}
-
-function Section({ title, children }) {
-    return (
-        <section className="border-t py-5 first:border-t-0 first:pt-0">
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[#052a50]">
-                {title}
-            </h3>
-            {children}
-        </section>
-    );
-}
-
-function getStatusStyle(status) {
-    switch (String(status || "").toLowerCase()) {
-        case "confirmed":
-            return {
-                background: "#dcfce7",
-                color: "#166534",
-                label: "Confirmed",
-            };
-
-        case "cancelled":
-        case "canceled":
-            return {
-                background: "#fee2e2",
-                color: "#991b1b",
-                label: "Cancelled",
-            };
-
-        case "rejected":
-            return {
-                background: "#ffedd5",
-                color: "#9a3412",
-                label: "Rejected",
-            };
-
-        default:
-            return {
-                background: "#f1f5f9",
-                color: "#334155",
-                label: status || "Unknown",
-            };
+  async function resendEmail(id) {
+    setEmailMsg({ id, text: "", busy: true });
+    try {
+      const d = await adminFetch(`/api/admin/bookings/${encodeURIComponent(id)}/email`, { method: "POST" });
+      setEmailMsg({ id, text: d.message || "Email sent.", busy: false });
+    } catch (e) {
+      setEmailMsg({ id, text: e.message, busy: false });
     }
-}
+  }
 
-function getPaymentStyle(status) {
-    if (String(status || "").toLowerCase() === "paid") {
-        return {
-            background: "#dcfce7",
-            color: "#166534",
-            label: "Paid",
-        };
-    }
-
-    return {
-        background: "#f1f5f9",
-        color: "#334155",
-        label: status || "Not recorded",
+  useEffect(() => {
+    if (!bookingId) return;
+    let alive = true;
+    adminFetch(`/api/admin/bookings/${encodeURIComponent(bookingId)}`)
+      .then((d) => alive && setResult({ id: bookingId, booking: d.booking, error: "" }))
+      .catch((e) => alive && setResult({ id: bookingId, booking: null, error: e.message }));
+    return () => {
+      alive = false;
     };
-}
+  }, [bookingId]);
 
-function getAddonLines(booking) {
-    const addons = booking.addons || {};
-    const lines = [];
+  // Ignore a result that belongs to a previously opened booking.
+  const current = result.id === bookingId ? result : { booking: null, error: "" };
+  const { booking, error } = current;
 
-    if (Number(addons.extraAdults) > 0) {
-        lines.push({
-            label: `Extra adults (${addons.extraAdults})`,
-            amount: addons.extraAdultTotal,
-        });
-    }
+  const p = booking?.pricing;
+  const a = p?.addons;
 
-    if (Number(addons.children) > 0) {
-        lines.push({
-            label: `Children (${addons.children})`,
-            amount: addons.childTotal,
-        });
-    }
-
-    if (Number(addons.extraBreakfast) > 0) {
-        lines.push({
-            label: `Extra breakfasts (${addons.extraBreakfast})`,
-            amount: addons.breakfastTotal,
-        });
-    }
-
-    if (addons.driver) {
-        lines.push({
-            label: "Driver accommodation",
-            amount: addons.driverTotal,
-        });
-    }
-
-    const mealLabels = {
-        lunch: "Lunch",
-        dinner: "Dinner",
-        lunchAndDinner: "Lunch and dinner",
-    };
-
-    Object.entries(addons.meals || {}).forEach(([key, meal]) => {
-        if (meal?.selected) {
-            lines.push({
-                label: mealLabels[key] || key,
-                detail: meal.people ? `${meal.people} people` : "",
-                amount: meal.total,
-            });
-        }
-    });
-
-    if (Array.isArray(addons.mealPlan)) {
-        addons.mealPlan.forEach((meal) => {
-            if (typeof meal === "string" && !addons.meals?.[meal]?.selected) {
-                lines.push({
-                    label: mealLabels[meal] || meal,
-                    amount: null,
-                });
-            }
-        });
-    }
-
-    if (Array.isArray(addons.items)) {
-        addons.items.forEach((item) => {
-            lines.push({
-                label: `${item.name || "Additional item"}${
-                    item.quantity ? ` × ${item.quantity}` : ""
-                }`,
-                amount: item.total,
-            });
-        });
-    }
-
-    return lines;
-}
-
-export default function BookingDetailsModal({
-    booking,
-    onClose,
-}) {
-    useEffect(() => {
-        if (!booking) return;
-
-        const previousOverflow = document.body.style.overflow;
-
-        document.body.style.overflow = "hidden";
-
-        function handleKeyDown(event) {
-            if (event.key === "Escape") {
-                onClose?.();
-            }
-        }
-
-        window.addEventListener("keydown", handleKeyDown);
-
-        return () => {
-            document.body.style.overflow = previousOverflow;
-            window.removeEventListener("keydown", handleKeyDown);
-        };
-    }, [booking, onClose]);
-
-    if (!booking) return null;
-
-    const customer = booking.customer || {};
-    const guests = booking.guests || {};
-    const pricing = booking.pricing || {};
-    const addons = booking.addons || {};
-
-    const status = getStatusStyle(booking.status);
-    const paymentStatus = getPaymentStyle(booking.paymentStatus);
-    const addonLines = getAddonLines(booking);
-
-    const amountPaid =
-        String(booking.paymentStatus || "").toLowerCase() === "paid"
-            ? Number(pricing.total) || 0
-            : 0;
-
-    return (
-        <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-[#052a50]/60 p-3 backdrop-blur-sm sm:p-6"
-            onMouseDown={(event) => {
-                if (event.target === event.currentTarget) {
-                    onClose?.();
-                }
-            }}
-        >
-            <div
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="booking-modal-title"
-                className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-[#F7FAEE] text-[#052a50] shadow-2xl"
+  return (
+    <AdminModal
+      isOpen={Boolean(bookingId)}
+      onClose={onClose}
+      title={bookingId ? `Booking ${bookingId}` : "Booking"}
+      footer={
+        booking && (
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            {booking.status === "confirmed" && (
+              <button
+                type="button"
+                disabled={emailMsg.busy}
+                onClick={() => resendEmail(booking.bookingId)}
+                className="rounded-xl border border-[#052a50]/20 bg-white px-5 py-3 text-sm font-semibold text-[#052a50] hover:bg-[#052a50]/5 disabled:opacity-50"
+              >
+                {emailMsg.busy ? "Sending…" : booking.email?.status === "sent" ? "Send email again" : "Send confirmation email"}
+              </button>
+            )}
+            <a
+              href={`/admin/invoice?id=${encodeURIComponent(booking.bookingId)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl border border-[#052a50]/20 bg-white px-5 py-3 text-center text-sm font-semibold text-[#052a50] hover:bg-[#052a50]/5"
             >
-                <header className="flex items-start justify-between gap-4 border-b border-[#052a50]/10 px-5 py-5 sm:px-7">
-                    <div className="min-w-0">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9a7b24]">
-                            SU VILLA · Reservation
-                        </p>
+              Invoice
+            </a>
+            {booking.status === "confirmed" && (
+              <button
+                type="button"
+                onClick={() => onRequestCancel?.(booking)}
+                className="rounded-xl bg-red-700 px-5 py-3 text-sm font-semibold text-white hover:bg-red-800"
+              >
+                Cancel booking
+              </button>
+            )}
+          </div>
+        )
+      }
+    >
+      {error && <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</p>}
+      {!booking && !error && <p className="py-10 text-center text-sm opacity-60">Loading booking…</p>}
 
-                        <h2
-                            id="booking-modal-title"
-                            className="mt-2 break-words text-xl font-semibold sm:text-2xl"
-                        >
-                            {booking.bookingId || "Booking details"}
-                        </h2>
+      {booking && (
+        <div className="space-y-4 text-[#052a50]">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge value={booking.status} />
+            <StatusBadge value={booking.paymentStatus} />
+            <span className="text-xs opacity-60">Booked {formatDateTime(booking.createdAt)}</span>
+          </div>
 
-                        <p className="mt-1 text-sm opacity-60">
-                            Created {formatDateTime(booking.createdAt)}
-                        </p>
-                    </div>
+          {booking.status === "cancelled" && (
+            <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              Cancelled {formatDateTime(booking.cancelledAt)}
+              {booking.cancelReason ? ` — ${booking.cancelReason}` : ""}
+            </p>
+          )}
 
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        aria-label="Close booking details"
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#052a50]/15 text-xl transition hover:bg-[#052a50]/5"
-                    >
-                        ×
-                    </button>
-                </header>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Card title="Guest">
+              <Row label="Name" value={booking.guest.name} />
+              <Row label="Email" value={booking.guest.email} />
+              <Row label="Phone" value={booking.guest.phone} />
+              <Row label="Address" value={booking.guest.address} />
+              <Row label="City" value={booking.guest.city} />
+              <Row label="PIN code" value={booking.guest.pinCode} />
+              <Row label="Aadhaar" value={booking.guest.aadhaar} />
+            </Card>
 
-                <div className="overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
-                    <div className="mb-6 flex flex-wrap gap-2">
-                        <span
-                            className="rounded-full px-3 py-1.5 text-xs font-semibold"
-                            style={{
-                                backgroundColor: status.background,
-                                color: status.color,
-                            }}
-                        >
-                            {status.label}
-                        </span>
+            <Card title="Stay">
+              <Row label="Check-in" value={formatDate(booking.checkIn)} />
+              <Row label="Check-out" value={formatDate(booking.checkOut)} />
+              <Row label="Nights" value={String(booking.nights || "—")} />
+              <Row label={booking.packageLine ? "Package" : "Rooms"} value={booking.packageLine ? `${booking.packageLine.name} — ${booking.rooms.join(", ")}` : booking.rooms.join(", ")} />
+              <Row label="Guests" value={guestSummary(booking)} />
+              <Row label="Driver stay" value={booking.driver?.accommodation === "yes" ? `Yes (${a?.drivers || 0})` : "No"} />
+              <Row label="Guest meals" value={a?.mealPlan ? `${MEAL_LABEL[a.mealPlan]} × ${a.mealGuests}` : "None"} />
+              <Row label="Driver meals" value={a?.driverMealPlan ? MEAL_LABEL[a.driverMealPlan] : "None"} />
+            </Card>
+          </div>
 
-                        <span
-                            className="rounded-full px-3 py-1.5 text-xs font-semibold"
-                            style={{
-                                backgroundColor: paymentStatus.background,
-                                color: paymentStatus.color,
-                            }}
-                        >
-                            Payment: {paymentStatus.label}
-                        </span>
-                    </div>
+          {booking.guest.specialRequest && (
+            <Card title="Special request">
+              <p className="text-sm leading-6">{booking.guest.specialRequest}</p>
+            </Card>
+          )}
 
-                    <Section title="Stay details">
-                        <div className="grid grid-cols-2 gap-x-5 gap-y-5 sm:grid-cols-3">
-                            <Detail label="Room" value={booking.roomId} />
-                            <Detail
-                                label="Check-in"
-                                value={formatDate(booking.checkIn)}
-                            />
-                            <Detail
-                                label="Check-out"
-                                value={formatDate(booking.checkOut)}
-                            />
-                            <Detail
-                                label="Duration"
-                                value={`${booking.nights || 0} ${
-                                    Number(booking.nights) === 1 ? "night" : "nights"
-                                }`}
-                            />
-                            <Detail
-                                label="Adults"
-                                value={guests.adults ?? "—"}
-                            />
-                            <Detail
-                                label="Children"
-                                value={guests.children ?? "—"}
-                            />
-                        </div>
-                    </Section>
-
-                    <Section title="Guest information">
-                        <div className="grid grid-cols-1 gap-x-5 gap-y-5 sm:grid-cols-2">
-                            <Detail label="Full name" value={customer.name} />
-                            <Detail label="Phone" value={customer.phone} />
-                            <Detail label="Email" value={customer.email} />
-                            <Detail label="Address" value={customer.address} />
-                            <Detail label="City" value={customer.city} />
-                            <Detail label="PIN code" value={customer.pinCode} />
-                        </div>
-                    </Section>
-
-                    <Section title="Add-ons and extras">
-                        {addonLines.length > 0 ? (
-                            <div className="space-y-3">
-                                {addonLines.map((item, index) => (
-                                    <div
-                                        key={`${item.label}-${index}`}
-                                        className="flex items-start justify-between gap-4 text-sm"
-                                    >
-                                        <div>
-                                            <p className="font-medium">
-                                                {item.label}
-                                            </p>
-
-                                            {item.detail && (
-                                                <p className="mt-1 text-xs opacity-55">
-                                                    {item.detail}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        <span className="shrink-0 font-medium">
-                                            {item.amount == null
-                                                ? "—"
-                                                : currency(item.amount)}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-sm opacity-55">
-                                No add-ons recorded for this booking.
-                            </p>
-                        )}
-
-                        {addons.total != null && (
-                            <div className="mt-4 flex justify-between border-t border-[#052a50]/10 pt-3 text-sm font-semibold">
-                                <span>Total add-ons</span>
-                                <span>{currency(addons.total)}</span>
-                            </div>
-                        )}
-                    </Section>
-
-                    <Section title="Special requests">
-                        <p className="whitespace-pre-wrap text-sm leading-6">
-                            {customer.specialRequest || "No special requests."}
-                        </p>
-                    </Section>
-
-                    <Section title="Price breakdown">
-                        <div className="space-y-3 text-sm">
-                            <div className="flex justify-between gap-4">
-                                <span className="opacity-65">Room total</span>
-                                <span>{currency(pricing.roomTotal)}</span>
-                            </div>
-
-                            <div className="flex justify-between gap-4">
-                                <span className="opacity-65">Add-ons total</span>
-                                <span>{currency(pricing.addonTotal)}</span>
-                            </div>
-
-                            <div className="flex justify-between gap-4">
-                                <span className="opacity-65">Subtotal</span>
-                                <span>{currency(pricing.subtotal)}</span>
-                            </div>
-
-                            <div className="flex justify-between gap-4">
-                                <span className="opacity-65">Tax</span>
-                                <span>{currency(pricing.tax)}</span>
-                            </div>
-
-                            <div className="flex justify-between gap-4">
-                                <span className="opacity-65">Platform fee</span>
-                                <span>{currency(pricing.platformFee)}</span>
-                            </div>
-
-                            <div className="mt-4 flex items-center justify-between gap-4 border-t border-[#052a50]/15 pt-4">
-                                <span className="font-semibold">Booking total</span>
-                                <span className="text-xl font-semibold">
-                                    {currency(pricing.total)}
-                                </span>
-                            </div>
-
-                            <div className="flex items-center justify-between gap-4 rounded-xl bg-white/70 p-4">
-                                <span className="text-sm opacity-65">
-                                    Amount paid
-                                </span>
-                                <span className="font-semibold">
-                                    {currency(amountPaid)}
-                                </span>
-                            </div>
-                        </div>
-                    </Section>
-
-                    {Array.isArray(pricing.nightlyBreakdown) &&
-                        pricing.nightlyBreakdown.length > 0 && (
-                            <Section title="Nightly rate breakdown">
-                                <div className="space-y-3">
-                                    {pricing.nightlyBreakdown.map((night, index) => (
-                                        <div
-                                            key={`${night.date || index}`}
-                                            className="flex items-center justify-between gap-4 text-sm"
-                                        >
-                                            <div>
-                                                <p className="font-medium">
-                                                    {formatDate(night.date)}
-                                                </p>
-                                                {night.type && (
-                                                    <p className="mt-1 text-xs opacity-55">
-                                                        {night.type}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            <span className="font-medium">
-                                                {currency(
-                                                    night.rate ??
-                                                        night.price ??
-                                                        night.amount
-                                                )}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </Section>
-                        )}
+          <Card title={booking.packageLine ? "Package & add-ons" : "Rooms & add-ons"}>
+            <div className="divide-y divide-[#052a50]/10">
+              {invoiceLines(booking, formatMoney).map((line, i) => (
+                <div key={i} className="flex items-start justify-between gap-4 py-2 text-sm">
+                  <div>
+                    <p className="font-medium">{line.label}</p>
+                    {line.sub && <p className="text-xs opacity-60">{line.sub}</p>}
+                  </div>
+                  <span className="shrink-0 font-semibold">{formatMoney(line.amount)}</span>
                 </div>
-
-                <footer className="flex justify-end border-t border-[#052a50]/10 bg-white/50 px-5 py-4 sm:px-7">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-xl bg-[#052a50] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#0b3b6b]"
-                    >
-                        Close details
-                    </button>
-                </footer>
+              ))}
             </div>
+          </Card>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Card title="Payment summary">
+              {p ? (
+                <>
+                  <Row label={booking.packageLine ? "Package" : "Rooms"} value={formatMoney(p.roomSubtotal)} />
+                  <Row label="Add-ons" value={formatMoney(a?.total)} />
+                  {p.discount > 0 && <Row label={`Discount (${p.promoCode}, ${p.discountPercent}%)`} value={`− ${formatMoney(p.discount)}`} />}
+                  <Row label="Tax" value={formatMoney(p.tax)} />
+                  <Row label="Platform fee" value={formatMoney(p.platformFee)} />
+                  <div className="mt-2 flex justify-between border-t border-[#052a50]/10 pt-2 text-base font-bold">
+                    <span>Total paid</span>
+                    <span>{formatMoney(booking.amount)}</span>
+                  </div>
+                </>
+              ) : (
+                <Row label="Total paid" value={formatMoney(booking.amount)} />
+              )}
+            </Card>
+
+            <Card title="Confirmation email">
+              <Row
+                label="Status"
+                value={
+                  !booking.email
+                    ? "Not sent"
+                    : booking.email.status === "sent"
+                      ? `Sent ${formatDateTime(booking.email.sentAt)}`
+                      : booking.email.status === "failed"
+                        ? `Failed — ${booking.email.error || "unknown error"}`
+                        : "Sending…"
+                }
+              />
+              {booking.email?.to && <Row label="To" value={booking.email.to} />}
+              {emailMsg.id === booking.bookingId && emailMsg.text && (
+                <p className="mt-2 text-sm font-medium text-[#b08a28]">{emailMsg.text}</p>
+              )}
+            </Card>
+
+            <Card title="Payment">
+              <Row label="Gateway" value="Razorpay" />
+              <Row label="Payment ID" value={booking.payment.paymentId} />
+              <Row label="Order ID" value={booking.payment.orderId} />
+              <Row label="Method" value={booking.payment.method} />
+              <Row label="Paid at" value={formatDateTime(booking.payment.capturedAt)} />
+              {booking.payment.refunds &&
+                Object.entries(booking.payment.refunds).map(([pid, r]) => (
+                  <Row key={pid} label="Refund" value={`${r.status}${r.refund_id ? ` (${r.refund_id})` : ""}`} />
+                ))}
+            </Card>
+          </div>
         </div>
-    );
+      )}
+    </AdminModal>
+  );
 }

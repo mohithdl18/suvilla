@@ -6,7 +6,7 @@
     "shortName": "FAMILY SUITE 01",
     "image": "/images/rooms/room1.jpg",
     "heroImage": "/images/rooms/room1.jpg",
-    "maxGuests": 6,
+    "maxGuests": 4,
     "tagline": "Wake up beside nature.",
     "description": "A peaceful retreat designed for slow mornings, quiet evenings and an intimate connection with the surrounding landscape.",
     "details": [
@@ -14,6 +14,15 @@
       { "label": "Bed", "value": "King Bed + Extra Bed (T&C apply)" },
       { "label": "View", "value": "Creek View" },
       { "label": "Floor", "value": "Ground Floor" }
+    ],
+    "highlights": [
+      "King-size bed",
+      "Indoor patio",
+      "Free Wi-Fi",
+      "Furnished",
+      "Privacy curtains",
+      "Extra bed (T&C apply)",
+      "Toiletries"
     ],
     "features": [
       "King-size bed",
@@ -52,7 +61,7 @@
     "shortName": "FAMILY SUITE 02",
     "image": "/images/rooms/room2.jpg",
     "heroImage": "/images/rooms/room2.jpg",
-    "maxGuests": 6,
+    "maxGuests": 4,
     "tagline": "A quiet stay among the trees.",
     "description": "Surrounded by greenery, Forest Haven offers a calm and private space to disconnect from the noise and reconnect with nature.",
     "details": [
@@ -60,6 +69,15 @@
       { "label": "Bed", "value": "King Bed + Extra Bed (T&C apply)" },
       { "label": "View", "value": "Forest View" },
       { "label": "Floor", "value": "First Floor" }
+    ],
+    "highlights": [
+      "King-size bed",
+      "Indoor patio",
+      "Free Wi-Fi",
+      "Furnished",
+      "Privacy curtains",
+      "Extra bed (T&C apply)",
+      "Toiletries"
     ],
     "features": [
       "King-size bed",
@@ -107,6 +125,15 @@
       { "label": "View", "value": "Canopy View" },
       { "label": "Floor", "value": "First Floor" }
     ],
+    "highlights": [
+      "King-size bed",
+      "Open-roof bathroom",
+      "Free Wi-Fi",
+      "Furnished",
+      "Privacy curtains",
+      "Extra bed (T&C apply)",
+      "Toiletries"
+    ],
     "features": [
       "King-size bed",
       "Privacy curtains",
@@ -149,6 +176,15 @@
       { "label": "Bed", "value": "King Bed + Extra Bed (T&C apply)" },
       { "label": "View", "value": "Garden View" },
       { "label": "Floor", "value": "Ground Floor" }
+    ],
+    "highlights": [
+      "King-size bed",
+      "Open-roof bathroom",
+      "Free Wi-Fi",
+      "Furnished",
+      "Privacy curtains",
+      "Extra bed (T&C apply)",
+      "Toiletries"
     ],
     "features": [
       "King-size bed",
