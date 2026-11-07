@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -15,6 +14,90 @@ import {
 } from "@/logic/price";
 import { updateBookingRooms, useBookingData } from "@/logic/Data";
 import { useLongWeekendDates } from "@/logic/useLongWeekendDates";
+
+// Image slider for a room card: arrows on the left and right, dots below,
+// and swipe on touch screens. Uses the room's existing images.
+function RoomImageSlider({ images, alt, disabled = false }) {
+  const slides = [...new Set(images.filter(Boolean))];
+  const [index, setIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState(null);
+  const count = slides.length;
+
+  const go = (step) => setIndex((current) => (current + step + count) % count);
+
+  if (count === 0) return null;
+
+  return (
+    <div
+      className="absolute inset-0"
+      onTouchStart={(event) => setTouchStartX(event.touches[0].clientX)}
+      onTouchEnd={(event) => {
+        if (touchStartX === null || count < 2) return;
+        const distance = event.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(distance) > 40) go(distance < 0 ? 1 : -1);
+        setTouchStartX(null);
+      }}
+    >
+      <div
+        className="flex h-full w-full transition-transform duration-500 ease-out"
+        style={{ transform: `translateX(-${index * 100}%)` }}
+      >
+        {slides.map((src, slideIndex) => (
+          <div key={src} className="relative h-full w-full shrink-0">
+            <Image
+              src={src}
+              alt={`${alt} - view ${slideIndex + 1}`}
+              fill
+              sizes="(max-width: 1023px) 100vw, 35vw"
+              className="object-cover"
+              priority={slideIndex === 0}
+            />
+          </div>
+        ))}
+      </div>
+
+      {count > 1 && !disabled && (
+        <>
+          <button
+            type="button"
+            onClick={() => go(-1)}
+            aria-label={`Previous photo of ${alt}`}
+            className="absolute left-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[#F7FAEE]/90 text-[#052a50] shadow-sm transition hover:bg-[#e4b441]"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => go(1)}
+            aria-label={`Next photo of ${alt}`}
+            className="absolute right-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[#F7FAEE]/90 text-[#052a50] shadow-sm transition hover:bg-[#e4b441]"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+
+          <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+            {slides.map((src, dotIndex) => (
+              <button
+                key={src}
+                type="button"
+                onClick={() => setIndex(dotIndex)}
+                aria-label={`Show photo ${dotIndex + 1} of ${alt}`}
+                className={`h-2 rounded-full transition-all ${
+                  dotIndex === index ? "w-5 bg-[#e4b441]" : "w-2 bg-white/80"
+                }`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function RoomsCard({
   onSelectRoom,
@@ -185,12 +268,10 @@ export default function RoomsCard({
                     !isAvailable ? "grayscale" : ""
                   }`}
                 >
-                  <Image
-                    src={room.image}
+                  <RoomImageSlider
+                    images={[room.image, ...(room.images || [])]}
                     alt={room.name}
-                    fill
-                    sizes="(max-width: 1023px) 100vw, 35vw"
-                    className="object-cover"
+                    disabled={!isAvailable}
                   />
 
                   <span className="absolute left-3 top-3 rounded-full bg-[#F7FAEE]/95 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#052a50]">
@@ -463,11 +544,19 @@ export default function RoomsCard({
                     </p>
 
                     <p
-                      className={`mt-2 text-2xl font-semibold tracking-tight sm:text-3xl ${
+                      className={`mt-2 flex flex-wrap items-baseline gap-x-3 text-2xl font-semibold tracking-tight sm:text-3xl ${
                         isAvailable ? "text-[#052a50]" : "text-gray-500"
                       }`}
                     >
-                      {formatPrice(totalPrice)}
+                      {/* Fixed reference price (display only, never charged). */}
+                      <span className="text-lg font-medium text-gray-400 line-through decoration-2 sm:text-xl">
+                        <span className="sr-only">Original price </span>
+                        {formatPrice(15999)}
+                      </span>
+                      <span>
+                        <span className="sr-only">Price </span>
+                        {formatPrice(totalPrice)}
+                      </span>
                     </p>
 
                     {stayPrice.longWeekendNights > 0 && (

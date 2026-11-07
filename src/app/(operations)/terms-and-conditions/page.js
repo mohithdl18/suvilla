@@ -7,89 +7,87 @@ export const metadata = {
 
 const sections = [
   {
-    title: "1. Booking and Reservations",
+    title: "1. General",
     content: [
-      "All reservations are subject to availability and confirmation by SU VILLA.",
-      "Guests must provide accurate contact information and booking details when making a reservation.",
-      "A reservation is considered confirmed only after the required payment has been successfully completed and confirmation has been issued.",
-      "The guest making the reservation is responsible for ensuring that all members of their party comply with these terms.",
+      "Please take time to read these terms and conditions governing the www.suvilla.in website. By accessing this website, you agree to accept, without limitation or qualification, all of these terms and conditions of use. If you do not agree to these terms, please do not use the site.",
     ],
   },
   {
-    title: "2. Guest Information and Occupancy",
+    title: "2. Site Availability",
     content: [
-      "Guests must provide accurate information about the number of adults and children staying at the property.",
-      "Room occupancy limits must be followed. Additional guests are subject to the applicable charges and property rules.",
-      "Children's accommodation charges, complimentary stays and extra-bed arrangements are governed by the rates and policies displayed during booking.",
-      "SU VILLA may request valid identification from guests as required by applicable law.",
+      "The site is accessible worldwide to anyone with Internet access. However, the site may not be continuously available due to maintenance or repairs, computer problems or crashes, disruption in Internet service or other unforeseen circumstances.",
     ],
   },
   {
-    title: "3. Pricing, Taxes and Additional Charges",
+    title: "3. Use of www.suvilla.in",
     content: [
-      "The booking summary displays the applicable accommodation charges, selected add-ons, discounts, taxes and platform fees.",
-      "Any additional charges must be disclosed to the guest before payment or incurred in accordance with the applicable property policies.",
-      "Promotional codes are subject to their stated eligibility requirements, validity periods and usage restrictions.",
-      "A promotional discount applies only as specified in the offer. It cannot be exchanged for cash unless the offer expressly permits it.",
+      "You may only use this website to make genuine and valid reservations or purchases. You may not use this website to make any fraudulent, false or speculative reservation.",
+      "You will be financially liable for all uses of this website made by you, and you are responsible for keeping your booking details and account information confidential.",
     ],
   },
   {
-    title: "4. Payments",
+    title: "4. Reservations, Amendment and Cancellation",
     content: [
-      "Payments must be completed through the payment methods offered during checkout.",
-      "A booking is not confirmed merely because a payment attempt has been initiated.",
-      "Payment confirmation is subject to successful processing by the payment provider.",
-      "If a payment is deducted but the booking is not confirmed, contact SU VILLA with the transaction reference so the payment and reservation status can be reviewed.",
+      "All reservations are subject to availability. Reservations made on this site are considered conditional until a confirmation number is sent to the guest by email. SU VILLA may, from time to time, contact guests to re-confirm reservations and to prevent fraudulent bookings.",
+      "Should guests wish to amend a reservation, they should contact SU VILLA at the earliest opportunity. Amendments are subject to availability, and SU VILLA will not be liable should it be unable to provide its products and services due to unavailability.",
+      "If SU VILLA, for reasons beyond its control, needs to reject or change a confirmed reservation, it will make all reasonable attempts to offer an alternative. If no alternative is accepted by the guest, SU VILLA will refund any amount paid and consider the reservation cancelled. This is the limit of SU VILLA's liability.",
+      "SU VILLA reserves the right to impose a cancellation fee per room per night in the event of a late cancellation or a no-show at the property.",
+      "SU VILLA does not guarantee acknowledgement of reservations or transactions made on this site where unforeseen circumstances, omissions or errors occur.",
     ],
   },
   {
-    title: "5. Check-in and Check-out",
+    title: "5. Charges and Payment Terms",
     content: [
-      "Check-in and check-out times are those communicated by SU VILLA for the confirmed reservation.",
-      "Early check-in and late check-out are subject to availability and may incur additional charges.",
-      "Guests should contact the property in advance if they expect to arrive late or require a change to their arrival arrangements.",
+      "Payment for a reservation is collected online at the time of booking through our secure payment partner, Razorpay. A reservation is confirmed only after the payment has been successfully completed.",
+      "If the payment terms are not complied with, SU VILLA reserves the right to cancel the booking without liability.",
+      "Disclaimer: Payments made through sources other than the official SU VILLA website (www.suvilla.in), authorised partners (B2B/B2C), Online Travel Agencies (OTAs), or directly with SU VILLA by phone will not be accepted.",
     ],
   },
   {
-    title: "6. Cancellation, Changes and Refunds",
+    title: "6. Cancellation Policy",
     content: [
-      "Cancellation charges and refund eligibility depend on the cancellation policy applicable to the reservation.",
-      "Requests to change booking dates, guest counts or accommodation selections are subject to availability and any applicable price difference.",
-      "Where a refund is approved, the amount and processing time will depend on the applicable policy and payment provider.",
-      "The specific cancellation deadline, refund percentage and any non-refundable charges must be communicated to the guest before the booking is confirmed.",
+      "Bookings cancelled less than 7 days before arrival: no refund will be issued.",
+      "Bookings cancelled more than 7 days before arrival: a full refund will be provided.",
+      "Refund processing time: refunds may take up to 15 bank working days to reflect in the guest's account.",
     ],
   },
   {
-    title: "7. Guest Conduct and Property Care",
+    title: "7. Internet Rates",
     content: [
-      "Guests must respect the property, its staff, other guests and the surrounding environment.",
-      "Guests are responsible for damage caused by them or members of their party, subject to applicable law and the property's disclosed policies.",
-      "Illegal activities, unsafe conduct and behaviour that materially disrupts other guests are not permitted.",
-      "Guests must follow any reasonable safety instructions and property rules communicated by SU VILLA.",
+      "SU VILLA reserves the right to change, modify and adjust rates with or without prior notice. The price shown at the time of booking is the price charged for that confirmed reservation.",
     ],
   },
   {
-    title: "8. Add-on Services",
+    title: "8. Special Offers and Promotions",
     content: [
-      "Meals, driver accommodation and other optional services are provided only when selected or separately confirmed.",
-      "Availability, service timings and applicable charges may vary. Any material changes should be communicated to the guest.",
-      "Special requests are subject to confirmation and are not guaranteed unless expressly accepted by SU VILLA.",
+      "Offers and promotions are subject to the specific terms, conditions and restrictions listed on the site. SU VILLA reserves the right to modify or withdraw any programme, offer or promotion at any time.",
     ],
   },
   {
-    title: "9. Privacy and Personal Information",
+    title: "9. Important Notice – No Loud Music After 10:30 PM",
     content: [
-      "Information supplied during booking may be used to process reservations, communicate booking updates, provide requested services and meet legal obligations.",
-      "Personal information should be handled in accordance with the applicable privacy policy and data protection laws.",
-      "Payment card details should be processed through the designated payment provider rather than stored unnecessarily by the property.",
+      "Dear Guests, as per government noise pollution regulations, playing loud music, DJ, or using high-volume speakers is strictly prohibited after 10:30 PM.",
+      "We kindly request all guests to keep music and television volume low after 10:30 PM, avoid loud conversations and disturbances, and respect the comfort and privacy of other guests and neighbouring properties.",
+      "Your cooperation is highly appreciated in maintaining a peaceful and pleasant atmosphere at SU VILLA SAKALESHAPURA. Thank you for your understanding and cooperation.",
     ],
   },
   {
-    title: "10. Changes and Applicable Law",
+    title: "10. House Rules",
     content: [
-      "These terms may be updated when necessary. The terms applicable to a reservation should be made available to the guest at the time of booking.",
-      "Nothing in these terms limits rights or remedies that cannot legally be excluded.",
-      "These terms are subject to applicable Indian law. Any dispute will be handled by the competent courts or authorities as provided by applicable law.",
+      "Entry & Exit Restrictions: Entry to and exit from the property after 10:30 PM is restricted and permitted only with prior management approval.",
+      "Maintain Silence: Guests are requested to avoid loud conversations, shouting and any activities that may disturb others.",
+      "Cooperation: All guests are expected to follow these rules to ensure a safe and peaceful stay.",
+    ],
+  },
+  {
+    title: "11. Limitation of Liability and Disclaimer",
+    content: [
+      "Errors or omissions may sometimes occur. SU VILLA does not warrant the accuracy, timeliness, currency or completeness of the contents of this site, including without limitation any information relating to rates and room availability. SU VILLA disclaims any warranty of any kind, whether express or implied, as to any matter relating to this website and other web links, including without limitation merchantability or fitness for any particular purpose.",
+      "SU VILLA will not be responsible for any damages, including without limitation damages for loss of profits, arising in contract or from your use or inability to use this site.",
+      "SU VILLA does not guarantee that this site is free from infection by viruses and shall not be liable for any resulting damage or loss.",
+      "In no event shall SU VILLA or its agents, affiliates, representatives or licensors be liable for any indirect, incidental or consequential damages whatsoever (including, without limitation, damages for loss of profits or loss of information) arising from the use or inability to use the contents of this site, even if SU VILLA has been informed of the possibility of such damages.",
+      "The site may contain links to other websites, directly or indirectly. Those sites are provided by independent third parties, and SU VILLA is not responsible for their availability or content.",
+      "Nothing in these terms limits rights or remedies that cannot legally be excluded. These terms are governed by the laws of India.",
     ],
   },
 ];
@@ -111,7 +109,7 @@ export default function TermsAndConditionsPage() {
             SU VILLA
           </p>
 
-          <h1 className="mt-3 font-display text-3xl sm:text-5xl">
+          <h1 className="mt-3 font-body text-3xl sm:text-5xl">
             Terms and Conditions
           </h1>
 
@@ -119,10 +117,6 @@ export default function TermsAndConditionsPage() {
             Please read these terms carefully before completing your
             reservation. They describe the general conditions for using
             the SU VILLA booking service.
-          </p>
-
-          <p className="mt-3 text-xs text-[#052a50]/55">
-            Draft policy — review and approve before publishing.
           </p>
         </header>
 
@@ -156,7 +150,7 @@ export default function TermsAndConditionsPage() {
 
           <a
             href="/bookings"
-            className="mt-6 inline-flex rounded-xl bg-[#052a50] px-6 py-3 font-semibold text-white transition hover:bg-[#B34325]"
+            className="mt-6 inline-flex rounded-xl bg-[#e4b441] px-6 py-3 font-semibold  transition"
           >
             Return to booking
           </a>
