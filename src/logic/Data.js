@@ -59,6 +59,7 @@ function createInitialData() {
       PinCode: "",
       AadharNumber: "",
       SpecialRequests: "",
+      GSTNumber: "",
     },
   };
 }
@@ -333,6 +334,7 @@ export function updateBookingInformation(details = {}) {
       SpecialRequests:
         details.specialRequests ??
         bookingData.Information.SpecialRequests,
+      GSTNumber: details.gstNumber ?? bookingData.Information.GSTNumber ?? "",
     },
   });
 }

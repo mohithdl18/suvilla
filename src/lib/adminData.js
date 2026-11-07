@@ -48,6 +48,7 @@ export function toDetails(b, paymentOrder = null) {
       pinCode: info.pin_code || "",
       aadhaar: info.aadhar_number || "",
       specialRequest: info.special_request || "",
+      gstNumber: info.gst_number || "",
     },
     nights: b.nights || 0,
     roomLines: (b.rooms || []).map((r) => ({

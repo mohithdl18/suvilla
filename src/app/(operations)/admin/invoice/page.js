@@ -76,6 +76,7 @@ function Invoice() {
             <p className="opacity-75">{[b.guest.city, b.guest.pinCode].filter(Boolean).join(" – ")}</p>
             <p className="opacity-75">{b.guest.phone}</p>
             <p className="opacity-75">{b.guest.email}</p>
+            {b.guest.gstNumber && <p className="opacity-75">GSTIN: {b.guest.gstNumber}</p>}
           </div>
           <div className="sm:text-right">
             <p className="mb-1 text-xs font-semibold uppercase tracking-[0.15em] opacity-55">Stay</p>

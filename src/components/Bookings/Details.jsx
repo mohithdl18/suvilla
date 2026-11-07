@@ -67,6 +67,7 @@ export default function Details({
     pincode: initialDetails.pincode || "",
     aadharNumber: initialDetails.aadharNumber || "",
     specialRequests: initialDetails.specialRequests || "",
+    gstNumber: initialDetails.gstNumber || "",
   });
 
   const [errors, setErrors] = useState({});
@@ -85,6 +86,10 @@ export default function Details({
 
     if (name === "aadharNumber") {
       updatedValue = value.replace(/\D/g, "").slice(0, 12);
+    }
+
+    if (name === "gstNumber") {
+      updatedValue = value.replace(/[^0-9a-z]/gi, "").toUpperCase().slice(0, 15);
     }
 
     setFormData((previous) => ({
@@ -134,6 +139,15 @@ export default function Details({
         "Aadhaar number must contain exactly 12 digits.";
     }
 
+    // GST number is optional; when entered it must be a valid 15-character GSTIN.
+    if (
+      formData.gstNumber &&
+      !/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(formData.gstNumber)
+    ) {
+      newErrors.gstNumber =
+        "Please enter a valid 15-character GST number, or leave it empty.";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -151,6 +165,7 @@ export default function Details({
       pincode: formData.pincode,
       aadharNumber: formData.aadharNumber,
       specialRequests: formData.specialRequests.trim(),
+      gstNumber: formData.gstNumber,
     };
 
     // Save the validated customer information to shared booking data.
@@ -290,6 +305,22 @@ export default function Details({
               maxLength={6}
               autoComplete="postal-code"
             />
+
+            <div className="sm:col-span-2">
+              <Field
+                label="GST Number (Optional)"
+                name="gstNumber"
+                value={formData.gstNumber}
+                onChange={handleChange}
+                error={errors.gstNumber}
+                placeholder="15-character GSTIN, e.g. 29ABCDE1234F1Z5"
+                maxLength={15}
+                required={false}
+              />
+              <p className="mt-2 text-xs leading-relaxed text-[#052a50]/60">
+                Add your business GST number if you need it on the invoice.
+              </p>
+            </div>
           </div>
         </div>
       </section>

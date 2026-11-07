@@ -124,6 +124,7 @@ export default function BookingDetailsModal({ bookingId, onClose, onRequestCance
               <Row label="City" value={booking.guest.city} />
               <Row label="PIN code" value={booking.guest.pinCode} />
               <Row label="Aadhaar" value={booking.guest.aadhaar} />
+              <Row label="GST number" value={booking.guest.gstNumber || "—"} />
             </Card>
 
             <Card title="Stay">

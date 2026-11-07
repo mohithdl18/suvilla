@@ -171,6 +171,7 @@ export async function finalizePayment({ orderId, paymentId }) {
               pin_code: customer.pin_code || "",
               city: customer.city || "",
               special_request: customer.special_request || "",
+              gst_number: customer.gst_number || "",
             },
             check_in: holds[0].checkIn,
             check_out: holds[0].checkOut,

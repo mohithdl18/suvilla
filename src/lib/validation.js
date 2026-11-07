@@ -101,6 +101,12 @@ export function validateCustomerDetails(details) {
   if (!city) throw new RequestError("Please enter your city.");
   if (!/^[1-9]\d{5}$/.test(pincode)) throw new RequestError("Please enter a valid 6-digit PIN code.");
 
+  // Optional GSTIN (15 characters), stored in upper case.
+  const gstNumber = clean(details.gstNumber, 15).replace(/\s/g, "").toUpperCase();
+  if (gstNumber && !/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstNumber)) {
+    throw new RequestError("Please enter a valid GST number, or leave it empty.");
+  }
+
   return {
     name,
     email,
@@ -110,5 +116,6 @@ export function validateCustomerDetails(details) {
     pin_code: pincode,
     aadhar_number: maskAadhaar(details.aadharNumber),
     special_request: special,
+    gst_number: gstNumber,
   };
 }

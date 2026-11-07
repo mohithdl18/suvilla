@@ -50,7 +50,7 @@ function drawInvoice(doc, b) {
   y += 14;
   doc.font("Helvetica-Bold").fontSize(10).fillColor(NAVY).text(b.guest.name || "-", left, y, { width: width / 2 });
   doc.font("Helvetica").fontSize(9).fillColor(NAVY);
-  [b.guest.address, [b.guest.city, b.guest.pinCode].filter(Boolean).join(" - "), b.guest.phone, b.guest.email]
+  [b.guest.address, [b.guest.city, b.guest.pinCode].filter(Boolean).join(" - "), b.guest.phone, b.guest.email, b.guest.gstNumber ? `GSTIN: ${b.guest.gstNumber}` : ""]
     .filter(Boolean)
     .forEach((l) => doc.text(l, { width: width / 2 }));
   const leftEnd = doc.y;

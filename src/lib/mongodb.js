@@ -105,6 +105,7 @@ const collectionDefinitions = [
               pin_code: { bsonType: "string" },
               city: { bsonType: "string" },
               special_request: { bsonType: "string" },
+              gst_number: { bsonType: "string" },
             },
           },
           dinner: {

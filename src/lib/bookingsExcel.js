@@ -73,7 +73,7 @@ export async function buildBookingsWorkbook(bookings, days, { baseUrl = "" } = {
     "Rooms / Package", "Check-in", "Check-out", "Nights", "Guests",
     "Stay amount", "Add-ons", "Subtotal", "Promo code", "Discount",
     `Tax (${Math.round(PRICES.taxRate * 100)}%)`, `Platform fee (${Math.round(PRICES.platformFeeRate * 100)}%)`,
-    "Total paid", "Razorpay payment ID", "Special request",
+    "Total paid", "Razorpay payment ID", "Special request", "Guest GSTIN",
   ];
   const bookingRows = [header(bookingColumns)];
   const totals = { stay: 0, addons: 0, subtotal: 0, discount: 0, tax: 0, fee: 0, paid: 0 };
@@ -119,6 +119,7 @@ export async function buildBookingsWorkbook(bookings, days, { baseUrl = "" } = {
       money(b.amount, { ...style, fontWeight: "bold" }),
       text(b.payment?.paymentId, style),
       text(b.guest?.specialRequest, { ...style, wrap: true }),
+      text(b.guest?.gstNumber, style),
     ]);
   });
 
@@ -134,6 +135,7 @@ export async function buildBookingsWorkbook(bookings, days, { baseUrl = "" } = {
     money(totals.tax, bold),
     money(totals.fee, bold),
     money(totals.paid, bold),
+    text("", bold),
     text("", bold),
     text("", bold),
   ]);
@@ -164,7 +166,7 @@ export async function buildBookingsWorkbook(bookings, days, { baseUrl = "" } = {
       {
         sheet: "Bookings",
         data: bookingRows,
-        columns: widths([26, 14, 13, 11, 13, 22, 28, 15, 14, 36, 13, 13, 8, 18, 14, 12, 14, 12, 12, 13, 14, 15, 22, 30]),
+        columns: widths([26, 14, 13, 11, 13, 22, 28, 15, 14, 36, 13, 13, 8, 18, 14, 12, 14, 12, 12, 13, 14, 15, 22, 30, 18]),
         stickyRowsCount: 1,
         orientation: "landscape",
       },

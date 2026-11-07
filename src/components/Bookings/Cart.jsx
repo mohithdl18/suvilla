@@ -724,6 +724,7 @@ export default function Cart({
         isOpen={isOpen}
         onClose={handleClose}
         title={modalTitle}
+        scrollKey={step}
       >
         {/* CART */}
         {step === "cart" && (

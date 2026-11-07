@@ -1,14 +1,30 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+
+/** Scroll the open booking modal back to its top. */
+export function scrollModalToTop() {
+  if (typeof document === "undefined") return;
+  document
+    .querySelectorAll("[data-modal-scroll]")
+    .forEach((element) => element.scrollTo({ top: 0, behavior: "auto" }));
+}
 
 export default function Modal({
   isOpen,
   onClose,
   title = "Your Cart",
+  scrollKey,
   children,
 }) {
+  const contentRef = useRef(null);
+
+  // Every new step (and the confirmed page) starts from the top.
+  useEffect(() => {
+    if (isOpen) contentRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [isOpen, scrollKey]);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -61,7 +77,13 @@ export default function Modal({
         </header>
 
         {/* Modal content */}
-        <div className="overflow-y-auto p-5 sm:p-6">{children}</div>
+        <div
+          ref={contentRef}
+          data-modal-scroll
+          className="overflow-y-auto p-5 sm:p-6"
+        >
+          {children}
+        </div>
       </section>
     </div>
   );

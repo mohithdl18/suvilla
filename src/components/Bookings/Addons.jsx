@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Details from "./Details";
+import { scrollModalToTop } from "./Modal";
 import {
   updateBookingMeals,
   updateBookingDrivers,
@@ -71,6 +72,11 @@ export default function Addons({
   initialDetails = {},
 }) {
   const [showDetails, setShowDetails] = useState(false);
+
+  // Moving between Add-ons and Your Details starts from the top.
+  useEffect(() => {
+    scrollModalToTop();
+  }, [showDetails]);
   const [selectedAddons, setSelectedAddons] = useState(null);
 
   const stayNights = Math.max(1, Number(nights) || 1);

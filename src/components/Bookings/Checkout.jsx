@@ -9,6 +9,7 @@ import {
   totalsFromSubtotal,
 } from "@/config/pricing";
 import { useLongWeekendDates } from "@/logic/useLongWeekendDates";
+import { BUSINESS } from "@/config/business";
 
 const COLORS = {
   background: "#F7FAEE",
@@ -632,8 +633,15 @@ export default function Checkout({
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-[#052a50]/70">Tax ({Math.round(TAX_RATE * 100)}%)</span>
+          <div className="flex items-start justify-between gap-4">
+            <span className="text-[#052a50]/70">
+              Tax ({Math.round(TAX_RATE * 100)}%)
+              {BUSINESS.gstin && (
+                <span className="mt-0.5 block text-xs text-[#052a50]/55">
+                  GSTIN: {BUSINESS.gstin}
+                </span>
+              )}
+            </span>
             <span className="font-medium">{formatPrice(taxAmount)}</span>
           </div>
 
