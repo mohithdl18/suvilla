@@ -225,7 +225,7 @@ Cancelled bookings are shown in red and left out of the totals.
 - Each booking is emailed only once automatically. Use **Resend email** in the dashboard to send it again.
 - If `EMAIL_BCC` is set, a copy of every confirmation is sent to the resort.
 - Invoices show the guest's GSTIN when they entered one.
-- **To print SU VILLA's own GSTIN** at checkout, on invoices and in emails, add it in `src/config/business.js` (`gstin: "..."`) and redeploy. The resort's address and phone number for invoices are set in the same file.
+- SU VILLA's GSTIN **29ASZPS8413J3ZL** is printed at checkout (under the 18% tax line), on every invoice (PDF and printable) and in confirmation emails. It is set in `src/config/business.js`, together with the address and phone number used on invoices.
 
 ---
 
@@ -499,4 +499,5 @@ When prices change, also update the Rooms page text and the Terms page if they m
 - Live site: https://www.suvilla.in · Admin: https://www.suvilla.in/admin
 - Prices: `src/config/pricing.js` · Business details / GSTIN: `src/config/business.js`
 - Secrets: Vercel environment variables only
-- Before go-live: add the resort GSTIN, rotate all secrets, switch Razorpay to live, run one real test booking.
+- Resort GSTIN: 29ASZPS8413J3ZL (set in `src/config/business.js`)
+- Before go-live: rotate all secrets, switch Razorpay to live, run one real test booking.

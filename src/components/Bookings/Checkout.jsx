@@ -638,7 +638,7 @@ export default function Checkout({
               Tax ({Math.round(TAX_RATE * 100)}%)
               {BUSINESS.gstin && (
                 <span className="mt-0.5 block text-xs text-[#052a50]/55">
-                  GSTIN: {BUSINESS.gstin}
+                  SU VILLA GSTIN: {BUSINESS.gstin}
                 </span>
               )}
             </span>

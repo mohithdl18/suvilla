@@ -5,5 +5,5 @@ export const BUSINESS = Object.freeze({
   phone: "+91 99761 24365",
   website: "suvilla.in",
   email: "",
-  gstin: "", // add your GSTIN here to print it on invoices
+  gstin: "29ASZPS8413J3ZL", // printed at checkout, on invoices and in confirmation emails
 });
