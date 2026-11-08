@@ -171,7 +171,7 @@ Set it **night by night**. For a Friday–Sunday holiday, enable Friday, Saturda
 
 ### Create an offer code
 1. Click **Offers** on the dashboard.
-2. Enter the **code** (e.g. WINTER15), the **discount %** (1–90) and **valid for (days, from today)**.
+2. Enter the **code** (e.g. WINTER15), the **discount %** (1–99) and **valid for (days, from today)**.
 3. Choose **Public** (shown to every guest under the offers icon) or **Private** (only works if you share the code).
 4. Publish. You can switch an offer off from the same window at any time.
 For private offers, use codes that are hard to guess, e.g. `SUV-K7Q2-FAMILY`.

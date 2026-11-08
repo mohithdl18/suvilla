@@ -26,7 +26,7 @@ try {
     const code = String(rawCode || "").toUpperCase();
     const percent = Number(rawPercent);
     if (!/^[A-Z0-9]{3,24}$/.test(code)) throw new Error("Code must be 3–24 letters/digits.");
-    if (!(percent > 0 && percent <= 90)) throw new Error("Percent must be 1–90.");
+    if (!(percent > 0 && percent <= 99)) throw new Error("Percent must be 1–99.");
     const doc = {
       code,
       percent,

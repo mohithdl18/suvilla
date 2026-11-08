@@ -20,7 +20,7 @@ import { RequestError } from "@/lib/security";
  */
 
 export const CODE_RE = /^[A-Z0-9]{3,24}$/;
-export const MAX_OFFER_PERCENT = 90;
+export const MAX_OFFER_PERCENT = 99;
 export const MAX_OFFER_DAYS = 365;
 const INVALID = "This promo code is invalid or has expired.";
 

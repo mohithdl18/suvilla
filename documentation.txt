@@ -244,7 +244,7 @@ and Sunday nights separately.
 Create an offer code
 ~~~~~~~~~~~~~~~~~~~~
   1. Click Offers on the dashboard.
-  2. Enter the code (e.g. WINTER15), the discount % (1–90) and valid for
+  2. Enter the code (e.g. WINTER15), the discount % (1–99) and valid for
      (days, from today).
   3. Choose Public (shown to every guest under the offers icon) or Private
      (only works if you share the code).

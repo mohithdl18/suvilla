@@ -42,7 +42,7 @@ export default function OffersModal({ isOpen, onClose }) {
     setNotice("");
     const pct = Number(percent);
     if (!/^[A-Z0-9]{3,24}$/.test(code)) return setError("Offer code must be 3–24 letters or numbers (no spaces).");
-    if (!Number.isInteger(pct) || pct < 1 || pct > 90) return setError("Percentage must be a whole number from 1 to 90.");
+    if (!Number.isInteger(pct) || pct < 1 || pct > 99) return setError("Percentage must be a whole number from 1 to 99.");
     if (!Number.isInteger(days) || days < 1 || days > 365) return setError("Validity must be 1–365 days.");
 
     setBusy(true);
@@ -92,7 +92,7 @@ export default function OffersModal({ isOpen, onClose }) {
 
             <div>
               <label htmlFor="offer-percent" className="text-sm font-semibold">Discount (%)</label>
-              <input id="offer-percent" type="number" inputMode="numeric" min={1} max={90} step={1} value={percent} placeholder="e.g. 15"
+              <input id="offer-percent" type="number" inputMode="numeric" min={1} max={99} step={1} value={percent} placeholder="e.g. 15"
                 onChange={(e) => setPercent(e.target.value.replace(/\D/g, "").slice(0, 2))} className={input} />
             </div>
 
