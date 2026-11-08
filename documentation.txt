@@ -172,6 +172,12 @@ Taxes and fees
   9. Booking confirmed: the guest sees a confirmation page and receives an
      email with the PDF invoice.
 
+Booking IDs run in order through the year: SV-INV-2026-0001, SV-INV-2026-0002
+and so on. The number is given only when a booking is confirmed, so failed or
+refunded payments never use one up and there are no gaps. The count starts
+again at 0001 on 1 January (India time). The same ID is used as the invoice
+number.
+
 If a payment goes through but the room was taken in the meantime (very rare),
 the system refunds the guest automatically.
 
@@ -549,9 +555,13 @@ Database: suvilla_bookings (or the value of MONGODB_DB).
     do not rename)
   - temp_books: 10-minute holds while a guest is booking (auto-deleted)
   - payment_orders: Every Razorpay order with its server-calculated amount,
-    status and refunds
+    status and refunds. Before payment an order has an internal reference
+    (ORD-…, also shown as the Razorpay receipt); once confirmed it is linked
+    to the booking ID
   - promo_codes: Offer codes (code, %, public/private, validity, usage count)
   - long_weekends: Nights marked as long weekend by the admin
+  - counters: The running booking number for each year (booking-2026 → last
+    number used). Do not edit or delete, or numbers may repeat
   - admin_sessions: Admin login sessions (expire after 24 h)
   - admin_audit: Log of admin actions: logins and failed logins, viewing and
     cancelling bookings, wrong cancel PINs, blocking rooms, offers, long
@@ -687,9 +697,10 @@ Every few months (technical)
     ADMIN_PASSWORD (10+ chars) or ADMIN_CANCEL_PIN (4–8 digits) missing or
     invalid
   - Login blocked: 5 wrong attempts. Wait 15 minutes
-  - Guest paid but booking not in admin: Check Razorpay → Payments and
-    Webhooks. Confirm RAZORPAY_WEBHOOK_SECRET matches the live webhook.
-    Payments that could not be confirmed are refunded automatically
+  - Guest paid but booking not in admin: Search Razorpay → Payments by payment
+    ID or the ORD-… receipt, and check Webhooks. Confirm
+    RAZORPAY_WEBHOOK_SECRET matches the live webhook. Payments that could not
+    be confirmed are refunded automatically
   - "Too many requests" from Razorpay: Razorpay's own rate limit, usually in
     test mode. Wait a few minutes
   - No confirmation emails: RESEND_API_KEY / EMAIL_FROM missing, or the domain

@@ -143,6 +143,7 @@ const collectionDefinitions = [
   { name: "admin_sessions" },
   { name: "admin_audit" },
   { name: "long_weekends" },
+  { name: "counters" }, // yearly booking number sequence
 ];
 
 // Indexes that enforce correctness at the database level.
@@ -169,6 +170,8 @@ const indexDefinitions = [
   ["bookings_data", { created_at: -1 }, {}],
   ["bookings_data", { status: 1, check_in: 1, check_out: 1 }, {}],
   ["room_nights", { booking_id: 1 }, {}],
+  ["bookings_data", { order_ref: 1 }, { sparse: true }],
+  ["bookings_data", { "payment.order_id": 1 }, {}],
   ["long_weekends", { date: 1 }, { unique: true }],
 ];
 

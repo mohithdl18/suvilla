@@ -119,7 +119,10 @@ export async function POST(request) {
       return jsonError("Invalid payment amount.");
     }
 
-    const bookingId = `SUV-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(6).toString("hex").toUpperCase()}`;
+    // Internal order reference used until payment is confirmed. The final
+    // booking ID (SV-INV-<year>-<number>) is given only when the booking is
+    // confirmed — see allocateBookingId() in src/lib/finalizeBooking.js.
+    const bookingId = `ORD-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(6).toString("hex").toUpperCase()}`;
     const lookupToken = randomToken(24);
 
     const { ok, data: order } = await razorpayRequest("/orders", {
@@ -138,6 +141,7 @@ export async function POST(request) {
 
     await db.collection("payment_orders").insertOne({
       booking_id: bookingId,
+      order_ref: bookingId,
       TempID,
       razorpay_order_id: order.id,
       amount_paise: amountPaise,

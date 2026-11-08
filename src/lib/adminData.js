@@ -7,7 +7,8 @@ import { RequestError } from "@/lib/security";
 export const ROOM_IDS = rooms.map((r) => r.id);
 const roomName = (id) => rooms.find((r) => r.id === id)?.name || id;
 
-export const BOOKING_ID_RE = /^SUV-[A-Z0-9-]{6,40}$/;
+// New: SV-INV-2026-0001. Older bookings made before the change: SUV-…
+export const BOOKING_ID_RE = /^(SV-INV-\d{4}-\d{4,7}|SUV-[A-Z0-9-]{6,40})$/;
 
 export function paymentLabel(booking) {
   const p = booking?.payment || {};

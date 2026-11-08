@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import rooms from "@/data/rooms.json";
 import RoomsModal from "./RoomsModal";
@@ -99,6 +99,25 @@ function RoomImageSlider({ images, alt, disabled = false }) {
   );
 }
 
+// "Adding..." with the three dots animating one after another.
+function LoadingLabel({ text }) {
+  return (
+    <span className="inline-flex items-baseline" role="status">
+      {text}
+      {[0, 1, 2].map((dot) => (
+        <span
+          key={dot}
+          aria-hidden="true"
+          className="animate-pulse"
+          style={{ animationDelay: `${dot * 200}ms`, animationDuration: "900ms" }}
+        >
+          .
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export default function RoomsCard({
   onSelectRoom,
   onOccupancyChange,
@@ -120,6 +139,10 @@ export default function RoomsCard({
   const hasLongWeekend = longWeekendDates.length > 0;
   const [occupancy, setOccupancy] = useState({});
   const [activeRoom, setActiveRoom] = useState(null);
+  // Room whose Select / Remove request is still being processed.
+  const [pendingRoom, setPendingRoom] = useState(null);
+  // Blocks repeat clicks instantly (before the button re-renders as disabled).
+  const pendingRef = useRef(null);
 
   // Keep every room visible. An empty array means all rooms are sold out.
   const isRoomAvailable = (roomId) =>
@@ -581,22 +604,36 @@ export default function RoomsCard({
 
                   <button
                     type="button"
-                    disabled={!isAvailable}
-                    onClick={() => {
-                      if (!isAvailable) return;
+                    disabled={!isAvailable || pendingRoom === room.id}
+                    aria-busy={pendingRoom === room.id}
+                    onClick={async () => {
+                      if (!isAvailable || pendingRef.current) return;
 
-                      onSelectRoom?.({
-                        ...room,
-                        ...guests,
-                        extraAdults: guests.adults,
-                        extraChildren: guests.children,
-                        nights: stayNights,
-                        basePrice,
-                        totalPrice,
-                      });
+                      pendingRef.current = room.id;
+                      setPendingRoom(room.id);
+                      // Keep the button locked until the room is in the cart,
+                      // and for at least 1.5 s so it can't be clicked twice.
+                      const minimumWait = new Promise((resolve) => setTimeout(resolve, 1500));
+                      try {
+                        await onSelectRoom?.({
+                          ...room,
+                          ...guests,
+                          extraAdults: guests.adults,
+                          extraChildren: guests.children,
+                          nights: stayNights,
+                          basePrice,
+                          totalPrice,
+                        });
+                        await minimumWait;
+                      } finally {
+                        pendingRef.current = null;
+                        setPendingRoom(null);
+                      }
                     }}
                     aria-pressed={isSelected}
                     className={`mt-4 w-full rounded-xl px-5 py-3.5 text-sm font-semibold transition-colors ${
+                      pendingRoom === room.id ? "cursor-wait " : ""
+                    }${
                       !isAvailable
                         ? "cursor-not-allowed bg-gray-300 text-gray-600"
                         : isSelected
@@ -606,7 +643,9 @@ export default function RoomsCard({
                   >
                     {!isAvailable
                       ? "SOLD OUT"
-                      : isSelected
+                      : pendingRoom === room.id
+                        ? <LoadingLabel text={isSelected ? "Removing room" : "Selecting room"} />
+                        : isSelected
                         ? "Selected"
                         : "Select Room"}
                   </button>

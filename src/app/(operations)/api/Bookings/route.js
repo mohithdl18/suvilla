@@ -7,7 +7,9 @@ import {
   sha256,
 } from "@/lib/security";
 
-const BOOKING_ID_RE = /^SUV-[A-Z0-9]{6,12}-[A-F0-9]{12}$/;
+// Booking ID (SV-INV-2026-0001), an older SUV-… ID, or the ORD-… order
+// reference a guest has if confirmation was still pending.
+const BOOKING_ID_RE = /^(SV-INV-\d{4}-\d{4,7}|(SUV|ORD)-[A-Z0-9]{6,12}-[A-F0-9]{12})$/;
 
 function maskEmail(email = "") {
   const [user, domain] = String(email).split("@");
@@ -21,7 +23,7 @@ function maskEmail(email = "") {
  * when the order was created (a booking ID alone is not proof of
  * ownership). Returns no Aadhaar, address or phone.
  *
- * GET /api/Bookings?bookingId=SUV-...&token=...
+ * GET /api/Bookings?bookingId=SV-INV-2026-0001&token=...
  */
 export async function GET(request) {
   const params = new URL(request.url).searchParams;
@@ -38,7 +40,7 @@ export async function GET(request) {
     if (limited) return limited;
 
     const booking = await db.collection("bookings_data").findOne(
-      { booking_id: bookingId },
+      { $or: [{ booking_id: bookingId }, { order_ref: bookingId }] },
       {
         projection: {
           _id: 0,

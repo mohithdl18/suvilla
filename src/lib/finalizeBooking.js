@@ -17,6 +17,25 @@ import { recordPromoUse } from "@/lib/promos";
  *   { state: "refunded" | "refund_failed", bookingId }  could not allot room
  *   { state: "not_found" } | { state: "mismatch" }
  */
+/**
+ * Next booking ID for the year, e.g. SV-INV-2026-0001, SV-INV-2026-0002 …
+ * Runs inside the confirming transaction, so a number is only used when the
+ * booking is actually confirmed. If the transaction fails or is rolled back
+ * (room taken, refund), the number is not used and there are no gaps.
+ * The count restarts at 0001 each year (India time).
+ */
+async function allocateBookingId(db, session, when = new Date()) {
+  const year = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric" }).format(when);
+  const counter = await db.collection("counters").findOneAndUpdate(
+    { _id: `booking-${year}` },
+    { $inc: { seq: 1 } },
+    { upsert: true, returnDocument: "after", session }
+  );
+  const seq = Number((counter && "value" in counter ? counter.value : counter)?.seq);
+  if (!Number.isSafeInteger(seq) || seq < 1) throw new Error("BOOKING_ID_ALLOCATION_FAILED");
+  return `SV-INV-${year}-${String(seq).padStart(4, "0")}`;
+}
+
 export async function finalizePayment({ orderId, paymentId }) {
   if (!PAYMENT_ID_RE.test(paymentId)) return { state: "mismatch" };
 
@@ -90,6 +109,7 @@ export async function finalizePayment({ orderId, paymentId }) {
 
   const session = client.startSession();
   let alreadyConfirmed = false;
+  let confirmedBookingId = null;
 
   try {
     await session.withTransaction(
@@ -100,10 +120,14 @@ export async function finalizePayment({ orderId, paymentId }) {
         const roomNights = db.collection("room_nights");
 
         const current = await paymentOrders.findOne({ _id: record._id }, { session });
-        const existing = await bookings.findOne({ booking_id: current.booking_id }, { session });
+        const existing = await bookings.findOne(
+          { $or: [{ booking_id: current.booking_id }, { "payment.order_id": orderId }] },
+          { session }
+        );
         if (existing?.status === "confirmed") {
           if (existing.payment?.payment_id === paymentId) {
             alreadyConfirmed = true;
+            confirmedBookingId = existing.booking_id;
             return;
           }
           throw new Error("DUPLICATE_PAYMENT");
@@ -112,6 +136,7 @@ export async function finalizePayment({ orderId, paymentId }) {
         const holds = Array.isArray(current.holds) ? current.holds : [];
         if (holds.length === 0) throw new Error("NO_PAYMENT_HOLDS");
         const now = new Date();
+        const orderRef = current.order_ref || current.booking_id;
 
         for (const hold of holds) {
           for (const date of hold.stayDates || []) {
@@ -139,12 +164,15 @@ export async function finalizePayment({ orderId, paymentId }) {
 
         // Hard guarantee against double-booking: one document per
         // room-night with a unique _id. A clash aborts the transaction.
+        // Sequential booking ID, given only now that the booking is confirmed.
+        const bookingId = await allocateBookingId(db, session, now);
+
         const nightDocs = holds.flatMap((hold) =>
           (hold.stayDates || []).map((date) => ({
             _id: `${hold.roomId}|${date}`,
             roomId: hold.roomId,
             date,
-            booking_id: current.booking_id,
+            booking_id: bookingId,
             created_at: now,
           }))
         );
@@ -161,7 +189,8 @@ export async function finalizePayment({ orderId, paymentId }) {
 
         await bookings.insertOne(
           {
-            booking_id: current.booking_id,
+            booking_id: bookingId,
+            order_ref: orderRef,
             personal_info: {
               name: customer.name || "",
               email: customer.email || "",
@@ -232,12 +261,16 @@ export async function finalizePayment({ orderId, paymentId }) {
           {
             $set: {
               status: "confirmed",
+              booking_id: bookingId,
+              order_ref: orderRef,
               razorpay_payment_id: paymentId,
               verifiedAt: now,
             },
           },
           { session }
         );
+
+        confirmedBookingId = bookingId;
       },
       {
         readConcern: { level: "snapshot" },
@@ -254,7 +287,7 @@ export async function finalizePayment({ orderId, paymentId }) {
     await session.endSession();
   }
 
-  return { state: "confirmed", bookingId: record.booking_id, alreadyConfirmed };
+  return { state: "confirmed", bookingId: confirmedBookingId || record.booking_id, alreadyConfirmed };
 }
 
 /**

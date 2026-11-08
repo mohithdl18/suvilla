@@ -121,6 +121,8 @@ Meals default to the total number of guests, and the guest can change this.
 8. **Pay with Razorpay** (UPI, cards, net banking, wallets).
 9. **Booking confirmed**: the guest sees a confirmation page and receives an email with the PDF invoice.
 
+**Booking IDs** run in order through the year: `SV-INV-2026-0001`, `SV-INV-2026-0002` and so on. The number is given only when a booking is confirmed, so failed or refunded payments never use one up and there are no gaps. The count starts again at 0001 on 1 January (India time). The same ID is used as the invoice number.
+
 If a payment goes through but the room was taken in the meantime (very rare), the system refunds the guest automatically.
 
 ## 4. The admin dashboard
@@ -393,9 +395,10 @@ Database: `suvilla_bookings` (or the value of `MONGODB_DB`).
 | `room_nights` | One entry per booked room per night. A unique index makes double booking impossible |
 | `room_availabilty` | Rooms blocked by the admin (the spelling is intentional; do not rename) |
 | `temp_books` | 10-minute holds while a guest is booking (auto-deleted) |
-| `payment_orders` | Every Razorpay order with its server-calculated amount, status and refunds |
+| `payment_orders` | Every Razorpay order with its server-calculated amount, status and refunds. Before payment an order has an internal reference (`ORD-…`, also shown as the Razorpay receipt); once confirmed it is linked to the booking ID |
 | `promo_codes` | Offer codes (code, %, public/private, validity, usage count) |
 | `long_weekends` | Nights marked as long weekend by the admin |
+| `counters` | The running booking number for each year (`booking-2026` → last number used). **Do not edit or delete**, or numbers may repeat |
 | `admin_sessions` | Admin login sessions (expire after 24 h) |
 | `admin_audit` | Log of admin actions: logins and failed logins, viewing and cancelling bookings, wrong cancel PINs, blocking rooms, offers, long weekends, email resends and Excel downloads |
 | `rate_limits` | Short-lived counters that block abuse (auto-deleted) |
@@ -482,7 +485,7 @@ When prices change, also update the Rooms page text and the Terms page if they m
 | "Cross-site request blocked" | `APP_ORIGIN` does not match the address in the browser. Use `https://www.suvilla.in` in production and `http://localhost:3000` locally, then redeploy |
 | Admin page says the admin is not configured (503) | `ADMIN_USERNAME`, `ADMIN_PASSWORD` (10+ chars) or `ADMIN_CANCEL_PIN` (4–8 digits) missing or invalid |
 | Login blocked | 5 wrong attempts. Wait 15 minutes |
-| Guest paid but booking not in admin | Check Razorpay → Payments and Webhooks. Confirm `RAZORPAY_WEBHOOK_SECRET` matches the live webhook. Payments that could not be confirmed are refunded automatically |
+| Guest paid but booking not in admin | Search Razorpay → Payments by payment ID or the `ORD-…` receipt, and check Webhooks. Confirm `RAZORPAY_WEBHOOK_SECRET` matches the live webhook. Payments that could not be confirmed are refunded automatically |
 | "Too many requests" from Razorpay | Razorpay's own rate limit, usually in test mode. Wait a few minutes |
 | No confirmation emails | `RESEND_API_KEY` / `EMAIL_FROM` missing, or the domain is not verified in Resend. Use **Resend email** after fixing |
 | Long-weekend price not showing | Make sure the specific **night** is enabled (not just the check-out day). Refresh the booking page |
