@@ -106,6 +106,7 @@ const collectionDefinitions = [
               city: { bsonType: "string" },
               special_request: { bsonType: "string" },
               gst_number: { bsonType: "string" },
+              privacy_accepted_at: { bsonType: ["date", "null"] },
             },
           },
           dinner: {

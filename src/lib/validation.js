@@ -101,6 +101,11 @@ export function validateCustomerDetails(details) {
   if (!city) throw new RequestError("Please enter your city.");
   if (!/^[1-9]\d{5}$/.test(pincode)) throw new RequestError("Please enter a valid 6-digit PIN code.");
 
+  // The guest must accept the Privacy Policy (checkbox in Your Details).
+  if (details.privacyAccepted !== true) {
+    throw new RequestError("Please accept the Privacy Policy to continue.");
+  }
+
   // Optional GSTIN (15 characters), stored in upper case.
   const gstNumber = clean(details.gstNumber, 15).replace(/\s/g, "").toUpperCase();
   if (gstNumber && !/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstNumber)) {
@@ -117,5 +122,6 @@ export function validateCustomerDetails(details) {
     aadhar_number: maskAadhaar(details.aadharNumber),
     special_request: special,
     gst_number: gstNumber,
+    privacy_accepted_at: new Date(),
   };
 }

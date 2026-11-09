@@ -3,6 +3,7 @@ import rooms from "@/data/rooms.json";
 import { getDb, clientPromise } from "@/lib/mongodb";
 import { getStayDates, isValidDate, todayInIndia } from "@/lib/validation";
 import { RequestError } from "@/lib/security";
+import { removeExpiredPersonalDataSafely } from "@/lib/privacy";
 
 export const ROOM_IDS = rooms.map((r) => r.id);
 const roomName = (id) => rooms.find((r) => r.id === id)?.name || id;
@@ -50,6 +51,8 @@ export function toDetails(b, paymentOrder = null) {
       aadhaar: info.aadhar_number || "",
       specialRequest: info.special_request || "",
       gstNumber: info.gst_number || "",
+      privacyAcceptedAt: info.privacy_accepted_at || null,
+      personalDataRemovedAt: b.personal_data_removed_at || null,
     },
     nights: b.nights || 0,
     roomLines: (b.rooms || []).map((r) => ({
@@ -102,6 +105,9 @@ export function toDetails(b, paymentOrder = null) {
 
 export async function getStats() {
   const db = await getDb();
+  // Privacy Policy: remove personal details 6 months after check-out
+  // (at most every 12 hours; never blocks the dashboard).
+  await removeExpiredPersonalDataSafely(db);
   const bookings = db.collection("bookings_data");
   const today = todayInIndia();
   const [total, active, cancelled, sum] = await Promise.all([

@@ -201,6 +201,7 @@ export async function finalizePayment({ orderId, paymentId }) {
               city: customer.city || "",
               special_request: customer.special_request || "",
               gst_number: customer.gst_number || "",
+              privacy_accepted_at: customer.privacy_accepted_at || null,
             },
             check_in: holds[0].checkIn,
             check_out: holds[0].checkOut,

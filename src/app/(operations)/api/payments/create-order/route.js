@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { after } from "next/server";
 import { getDb } from "@/lib/mongodb";
 import rooms from "@/data/rooms.json";
 import {
@@ -16,6 +17,7 @@ import {
 import { validateStay, validateCustomerDetails } from "@/lib/validation";
 import { quoteBooking, resolvePackage, getLongWeekendDates } from "@/lib/pricing";
 import { resolvePromo } from "@/lib/promos";
+import { removeExpiredPersonalDataSafely } from "@/lib/privacy";
 import { razorpayConfigured, razorpayRequest, publicKeyId } from "@/lib/razorpay";
 
 
@@ -162,6 +164,10 @@ export async function POST(request) {
       status: "created",
       createdAt: now,
     });
+
+    // Privacy Policy: remove personal details 6 months after check-out
+    // (runs in the background, at most every 12 hours).
+    after(() => removeExpiredPersonalDataSafely(db));
 
     return jsonOk({
       success: true,

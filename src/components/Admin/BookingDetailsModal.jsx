@@ -117,6 +117,11 @@ export default function BookingDetailsModal({ bookingId, onClose, onRequestCance
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Card title="Guest">
+              {booking.guest.personalDataRemovedAt && (
+                <p className="mb-2 rounded-xl bg-[#F7FAEE] px-3 py-2 text-xs leading-5 opacity-80">
+                  Contact details were removed on {formatDate(booking.guest.personalDataRemovedAt)}, 6 months after check-out, as stated in the Privacy Policy. Invoice details are kept.
+                </p>
+              )}
               <Row label="Name" value={booking.guest.name} />
               <Row label="Email" value={booking.guest.email} />
               <Row label="Phone" value={booking.guest.phone} />

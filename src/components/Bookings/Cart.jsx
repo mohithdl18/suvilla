@@ -374,6 +374,7 @@ export default function Cart({
           pincode: customerDetails.pincode || "",
           aadharNumber: customerDetails.aadharNumber || "",
           gstNumber: customerDetails.gstNumber || "",
+          privacyAccepted: customerDetails.privacyAccepted === true,
           specialRequests:
             customerDetails.specialRequests ||
             customerDetails.specialRequest ||

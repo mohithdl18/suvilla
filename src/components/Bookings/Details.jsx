@@ -69,6 +69,9 @@ export default function Details({
     specialRequests: initialDetails.specialRequests || "",
     gstNumber: initialDetails.gstNumber || "",
   });
+  const [privacyAccepted, setPrivacyAccepted] = useState(
+    initialDetails.privacyAccepted === true
+  );
 
   const [errors, setErrors] = useState({});
 
@@ -148,6 +151,10 @@ export default function Details({
         "Please enter a valid 15-character GST number, or leave it empty.";
     }
 
+    if (!privacyAccepted) {
+      newErrors.privacy = "Please read and accept the Privacy Policy to continue.";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -166,6 +173,7 @@ export default function Details({
       aadharNumber: formData.aadharNumber,
       specialRequests: formData.specialRequests.trim(),
       gstNumber: formData.gstNumber,
+      privacyAccepted: true,
     };
 
     // Save the validated customer information to shared booking data.
@@ -381,6 +389,43 @@ export default function Details({
             className="w-full resize-y rounded-xl border border-[#052a50]/15 bg-white px-4 py-3 text-sm text-[#052a50] outline-none transition placeholder:text-[#052a50]/40 focus:border-[#e4b441]"
           />
         </div>
+      </section>
+
+      {/* Privacy Policy */}
+      <section className="rounded-2xl border border-[#052a50]/10 bg-white p-4 sm:p-5">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={privacyAccepted}
+            onChange={(event) => {
+              setPrivacyAccepted(event.target.checked);
+              if (event.target.checked) {
+                setErrors((previous) => ({ ...previous, privacy: "" }));
+              }
+            }}
+            className="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-[#052a50]"
+          />
+
+          <span className="text-sm leading-6 text-[#052a50]/80">
+            I have read and agree to the{" "}
+            <a
+              href="/privacy-policy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-[#052a50] underline underline-offset-4 transition hover:text-[#B34325]"
+            >
+              Privacy Policy
+            </a>
+            , and I consent to SU VILLA using my details to manage this
+            booking. <span className="text-red-600">*</span>
+          </span>
+        </label>
+
+        {errors.privacy && (
+          <p role="alert" className="mt-3 text-xs text-red-600">
+            {errors.privacy}
+          </p>
+        )}
       </section>
 
       {/* Navigation */}

@@ -53,6 +53,7 @@ The website has two parts.
 | Blogs | `/blogs` | Articles about the stay and the area |
 | Book now | `/bookings` | Live availability, prices and online payment |
 | Terms & Conditions | `/terms-and-conditions` | Booking, payment, cancellation and house rules |
+| Privacy Policy | `/privacy-policy` | What guest data is collected, why, how it is used, who sees it, and when it is deleted |
 
 **The booking and admin system**
 - Guests choose dates, rooms (or a whole-villa package), extra guests and add-ons, enter their details and pay online through Razorpay.
@@ -116,7 +117,7 @@ Meals default to the total number of guests, and the guest can change this.
 3. **Add extra guests** using the + / − buttons on the room card.
 4. **Open the cart** (round button, bottom right). Review the selection.
 5. **Add-ons**: meals and driver accommodation.
-6. **Your details**: name, email, phone, address, city, PIN code, Aadhaar number, an optional **GST number** (for business invoices) and special requests.
+6. **Your details**: name, email, phone, address, city, PIN code, Aadhaar number, an optional **GST number** (for business invoices) and special requests. The guest must tick the **Privacy Policy** box to continue. The time of agreement is saved with the booking.
 7. **Checkout**: the full price breakdown. Guests can apply an offer code here. Public offers are shown under the offers icon above the cart.
 8. **Pay with Razorpay** (UPI, cards, net banking, wallets).
 9. **Booking confirmed**: the guest sees a confirmation page and receives an email with the PDF invoice.
@@ -408,6 +409,8 @@ Database: `suvilla_bookings` (or the value of `MONGODB_DB`).
 
 Aadhaar numbers are stored and shown masked (last 4 digits only).
 
+**Automatic deletion of personal data (Privacy Policy):** 6 months after a guest's check-out date, the system deletes their email, phone number, Aadhaar digits, special requests, and their postal address and PIN code (the address is kept only when the guest gave a GST number). It also deletes the guest details copied onto payment orders older than 6 months. The name, city, GST number, dates, rooms and amounts are kept, because GST law requires tax invoices to be kept for several years. The clean-up runs by itself, at most every 12 hours, when the admin dashboard is opened or a new booking is started (code: `src/lib/privacy.js`). In the admin, such bookings show a note that the contact details were removed. Its last run time is kept in `counters` (`privacy-cleanup`).
+
 **Backups:** enable scheduled backups in MongoDB Atlas, or at least export `bookings_data` and `payment_orders` regularly. The Excel download in the admin is also a useful monthly record.
 
 ## 16. API routes
@@ -456,6 +459,7 @@ All routes are in `src/app/(operations)/api/`.
 | Crossed-out ₹15,999 reference price | `src/components/Bookings/RoomsCard.jsx` (search `15999`) | Redeploy |
 | Resort name, address, phone, GSTIN on invoices | `src/config/business.js` | Redeploy |
 | Terms, cancellation policy, house rules | `src/app/(operations)/terms-and-conditions/page.js` | Redeploy |
+| Privacy policy | `src/app/(operations)/privacy-policy/page.js` (also update `LAST_UPDATED`). The 6-month period is `RETENTION_MONTHS` in `src/lib/privacy.js`; keep both in step | Redeploy |
 | Gallery photos | Add files to `public/images/gallery/` named `gallery-16.jpg`, `gallery-17.jpg` … (shown in number order). Optional captions in `src/app/(experience)/gallery/page.js` → `captions` | Redeploy |
 
 Photo tips: resize to about 1800 px on the longest side and save as JPG (aim for under 500 KB) so pages load fast on mobile.
