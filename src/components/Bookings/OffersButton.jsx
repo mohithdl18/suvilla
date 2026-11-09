@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import Modal from "@/components/Bookings/Modal";
 
 export const OFFER_STORAGE_KEY = "suvilla_offer_code";
+// Remembers that the offers popup was shown, so it opens once per visit
+// (browser session), not on every page refresh.
+const AUTO_OPEN_KEY = "suvilla_offers_popup_shown";
+const AUTO_OPEN_DELAY_MS = 800;
 
 function formatUntil(value) {
   if (!value) return "";
@@ -22,12 +26,34 @@ export default function OffersButton() {
 
   useEffect(() => {
     let alive = true;
+    let timer;
     fetch("/api/offers", { cache: "no-store" })
       .then((r) => r.json())
-      .then((d) => alive && (d.success ? setOffers(d.offers || []) : setError(d.message || "")))
+      .then((d) => {
+        if (!alive) return;
+        if (!d.success) return setError(d.message || "");
+        const list = d.offers || [];
+        setOffers(list);
+
+        // Open the offers popup automatically, only when there is at least
+        // one offer, and only once per visit.
+        if (list.length > 0) {
+          let alreadyShown = false;
+          try {
+            alreadyShown = window.sessionStorage.getItem(AUTO_OPEN_KEY) === "1";
+            window.sessionStorage.setItem(AUTO_OPEN_KEY, "1");
+          } catch {
+            // storage unavailable — still show it
+          }
+          if (!alreadyShown) {
+            timer = setTimeout(() => alive && setIsOpen(true), AUTO_OPEN_DELAY_MS);
+          }
+        }
+      })
       .catch(() => alive && setError("Couldn't load offers right now."));
     return () => {
       alive = false;
+      clearTimeout(timer);
     };
   }, []);
 
