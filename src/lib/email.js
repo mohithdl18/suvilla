@@ -12,7 +12,7 @@ import { invoiceLines, guestSummary } from "@/config/invoiceLines";
  *
  * Env (.env.local):
  *   RESEND_API_KEY   re_...
- *   EMAIL_FROM       "SU VILLA <bookings@mail.suvilla.in>"  (verified domain)
+ *   EMAIL_FROM       SU VILLA <bookings@mail.suvilla.in>   (verified domain; no quotes needed)
  *   EMAIL_REPLY_TO   optional — where guest replies go
  *   EMAIL_BCC        optional — copy every confirmation to the resort
  *
@@ -24,9 +24,22 @@ import { invoiceLines, guestSummary } from "@/config/invoiceLines";
 const STALE_CLAIM_MS = 10 * 60 * 1000;
 
 let warned = false;
+// Values pasted into Vercel / .env often carry stray quotes or spaces
+// ("SU VILLA <bookings@mail.suvilla.in>"), which Resend rejects.
+const unquote = (v) => String(v || "").trim().replace(/^(['"`])(.*)\1$/s, "$2").trim();
+const EMAIL_RE = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
+const FROM_RE = /^(?:[^<>]+<\s*[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+\s*>|[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+)$/;
+
 function config() {
-  const apiKey = (process.env.RESEND_API_KEY || "").trim();
-  const from = (process.env.EMAIL_FROM || "").trim();
+  const apiKey = unquote(process.env.RESEND_API_KEY);
+  const from = unquote(process.env.EMAIL_FROM).replace(/\s*<\s*/, " <").replace(/\s*>$/, ">");
+  if (from && !FROM_RE.test(from)) {
+    if (!warned) {
+      warned = true;
+      console.warn('[email] EMAIL_FROM is not valid. Use: SU VILLA <bookings@mail.suvilla.in> (no quotes).');
+    }
+    return null;
+  }
   if (!apiKey || !from) {
     if (!warned) {
       warned = true;
@@ -34,7 +47,7 @@ function config() {
     }
     return null;
   }
-  const list = (v) => (v || "").split(",").map((x) => x.trim()).filter(Boolean);
+  const list = (v) => unquote(v).split(",").map(unquote).filter((x) => EMAIL_RE.test(x));
   return {
     apiKey,
     from,

@@ -582,12 +582,12 @@ export default function RoomsCard({
                       </span>
                     </p>
 
-                    {stayPrice.longWeekendNights > 0 && (
+                    {/* {stayPrice.longWeekendNights > 0 && (
                       <span className="mt-2 inline-flex rounded-full border border-[#e4b441] bg-[#e4b441]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#052a50]">
                         Long weekend rate · {stayPrice.longWeekendNights}{" "}
                         {stayPrice.longWeekendNights === 1 ? "night" : "nights"}
                       </span>
-                    )}
+                    )} */}
 
                     <p className="mt-1 text-xs leading-5 text-gray-500">
                       {weekdayWeekendLabel(PRICING.accommodation, hasLongWeekend)} per

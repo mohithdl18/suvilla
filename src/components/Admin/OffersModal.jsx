@@ -27,6 +27,8 @@ export default function OffersModal({ isOpen, onClose }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [offers, setOffers] = useState(null);
+  // Offer waiting for "Yes, turn off" (turning off deletes it).
+  const [confirmCode, setConfirmCode] = useState(null);
 
   const loadOffers = () =>
     adminFetch("/api/admin/offers").then((d) => setOffers(d.offers)).catch((e) => setError(e.message));
@@ -67,7 +69,8 @@ export default function OffersModal({ isOpen, onClose }) {
     setNotice("");
     try {
       await adminFetch("/api/admin/offers", { method: "DELETE", body: { code: offerCode } });
-      setNotice(`${offerCode} was turned off.`);
+      setConfirmCode(null);
+      setNotice(`${offerCode} was turned off and removed.`);
       loadOffers();
     } catch (e) {
       setError(e.message);
@@ -144,27 +147,41 @@ export default function OffersModal({ isOpen, onClose }) {
         </form>
 
         <section>
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-[#b08a28]">All offers</h3>
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-[#b08a28]">Active offers</h3>
           {!offers && <p className="text-sm opacity-60">Loading…</p>}
-          {offers && !offers.length && <p className="text-sm opacity-60">No offers yet.</p>}
+          {offers && !offers.length && <p className="text-sm opacity-60">No active offers.</p>}
           <div className="space-y-2">
             {offers?.map((o) => (
               <div key={o.code} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#052a50]/10 bg-white px-4 py-3">
                 <div className="min-w-0">
                   <p className="font-mono text-sm font-semibold tracking-wider">{o.code}</p>
                   <p className="text-xs opacity-65">
-                    {o.percent}% off · {o.visibility} · {o.status === "expired" ? "ended" : "until"} {formatDate(o.validUntil)} · used {o.usedCount}×
+                    {o.percent}% off · {o.visibility} · until {formatDate(o.validUntil)} · used {o.usedCount}×
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize ${STATUS[o.status]}`}>
-                    {o.status === "off" ? "Turned off" : o.status}
-                  </span>
-                  {o.status === "live" && (
-                    <button type="button" onClick={() => turnOff(o.code)}
-                      className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50">
-                      Turn off
-                    </button>
+                  {confirmCode === o.code ? (
+                    <>
+                      <span className="text-xs font-semibold text-red-700">Turn off and remove?</span>
+                      <button type="button" onClick={() => turnOff(o.code)}
+                        className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700">
+                        Yes
+                      </button>
+                      <button type="button" onClick={() => setConfirmCode(null)}
+                        className="rounded-lg border border-[#052a50]/20 px-3 py-1.5 text-xs font-semibold hover:bg-[#F7FAEE]">
+                        No
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize ${STATUS.live}`}>
+                        Live
+                      </span>
+                      <button type="button" onClick={() => setConfirmCode(o.code)}
+                        className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50">
+                        Turn off
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

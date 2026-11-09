@@ -50,17 +50,25 @@ function Invoice() {
 
       <article className="rounded-3xl border border-[#052a50]/10 bg-white p-6 text-[#052a50] sm:p-10 print:rounded-none print:border-0 print:p-0">
         <header className="flex flex-col justify-between gap-6 border-b border-[#052a50]/10 pb-6 sm:flex-row">
-          <div>
-            <h1 className="font-body text-4xl">{BUSINESS.name}</h1>
-            <div className="mt-2 text-sm leading-6 opacity-75">
-              {BUSINESS.addressLines.map((l) => <p key={l}>{l}</p>)}
-              <p>{[BUSINESS.phone, BUSINESS.website, BUSINESS.email].filter(Boolean).join(" · ")}</p>
-              {BUSINESS.gstin && <p>GSTIN: {BUSINESS.gstin}</p>}
+          <div className="order-2 sm:order-1">
+            <div>
+              <h1 className="font-body text-3xl font-bold leading-none tracking-wide sm:text-4xl">{BUSINESS.brand}</h1>
+              <p className="mt-1 text-sm italic tracking-wide text-[#b08a28]">{BUSINESS.tagline}</p>
+              <div className="mt-3 text-xs leading-5 opacity-80 sm:text-sm sm:leading-6">
+                {BUSINESS.addressLines.map((l) => <p key={l}>{l}</p>)}
+              </div>
+              <div className="mt-2 text-xs leading-5 sm:text-sm sm:leading-6">
+                {BUSINESS.gstin && <p><span className="opacity-70">GST Number :</span> <strong>{BUSINESS.gstin}</strong></p>}
+                {BUSINESS.phone && <p><span className="opacity-70">Phone Number :</span> {BUSINESS.phone}</p>}
+                {BUSINESS.email && <p><span className="opacity-70">Email :</span> {BUSINESS.email}</p>}
+              </div>
             </div>
           </div>
-          <div className="text-left sm:text-right">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#b08a28]">Invoice</p>
-            <p className="mt-1 font-mono text-sm">{b.bookingId}</p>
+          <div className="order-1 flex flex-col items-start sm:order-2 sm:items-end sm:text-right">
+            <img src={BUSINESS.logo} alt={`${BUSINESS.name} logo`} className="mb-4 h-20 w-20 sm:h-24 sm:w-24" />
+            <p className="text-lg font-bold uppercase tracking-[0.2em] text-[#b08a28]">Tax Invoice</p>
+            <p className="mt-2 text-xs uppercase tracking-wide opacity-60">Invoice No.</p>
+            <p className="font-mono text-sm font-semibold">{b.bookingId}</p>
             <p className="mt-2 text-sm opacity-75">Date: {formatDate(b.createdAt)}</p>
             {b.status === "cancelled" && (
               <p className="mt-2 inline-block rounded-full border border-red-300 px-3 py-0.5 text-xs font-bold text-red-700">CANCELLED</p>
@@ -76,7 +84,7 @@ function Invoice() {
             <p className="opacity-75">{[b.guest.city, b.guest.pinCode].filter(Boolean).join(" – ")}</p>
             <p className="opacity-75">{b.guest.phone}</p>
             <p className="opacity-75">{b.guest.email}</p>
-            {b.guest.gstNumber && <p className="opacity-75">GSTIN: {b.guest.gstNumber}</p>}
+            {b.guest.gstNumber && <p className="mt-1"><span className="opacity-70">GST Number :</span> <strong>{b.guest.gstNumber}</strong></p>}
           </div>
           <div className="sm:text-right">
             <p className="mb-1 text-xs font-semibold uppercase tracking-[0.15em] opacity-55">Stay</p>

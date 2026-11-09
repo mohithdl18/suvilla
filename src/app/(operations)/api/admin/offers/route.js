@@ -3,7 +3,7 @@ import { jsonError, jsonOk, readJsonBody, RequestError } from "@/lib/security";
 import { requireAdmin, audit } from "@/lib/adminAuth";
 import { createOffer, disableOffer, listOffers } from "@/lib/promos";
 
-// GET: all offers (newest first)
+// GET: live offers only (newest first). Expired / turned-off offers are deleted.
 export async function GET(request) {
   const { response } = await requireAdmin(request);
   if (response) return response;
@@ -31,7 +31,7 @@ export async function POST(request) {
   }
 }
 
-// DELETE { code } → turn the offer off (kept for records)
+// DELETE { code } → turn the offer off (deletes it; the audit log keeps a note)
 export async function DELETE(request) {
   const { session, response } = await requireAdmin(request, { mutating: true });
   if (response) return response;

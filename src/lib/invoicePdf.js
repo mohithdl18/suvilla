@@ -3,6 +3,9 @@ import PDFDocument from "pdfkit";
 import { BUSINESS } from "@/config/business";
 import { PRICES } from "@/config/pricing";
 import { invoiceLines } from "@/config/invoiceLines";
+import { INVOICE_LOGO_PNG_BASE64 } from "@/lib/invoiceLogo";
+
+const LOGO = Buffer.from(INVOICE_LOGO_PNG_BASE64, "base64");
 
 const NAVY = "#052a50";
 const GOLD = "#b08a28";
@@ -26,21 +29,30 @@ function drawInvoice(doc, b) {
   const p = b.pricing || {};
   const nights = p.nights || b.nights || 1;
 
-  // Header
-  doc.fillColor(NAVY).font("Helvetica-Bold").fontSize(20).text(BUSINESS.name, left, 50, { width: width * 0.6 });
-  doc.font("Helvetica").fontSize(9).fillColor(MUTED);
-  BUSINESS.addressLines.forEach((l) => doc.text(l, { width: width * 0.6 }));
-  doc.text([BUSINESS.phone, BUSINESS.website, BUSINESS.email].filter(Boolean).join("  ·  "), { width: width * 0.6 });
-  if (BUSINESS.gstin) doc.text(`GSTIN: ${BUSINESS.gstin}`);
+  // Header: SU VILLA / by the Creek, address and contacts (left);
+  // logo, then TAX INVOICE, invoice number and date (right).
+  const textLeft = left;
+  const textWidth = width * 0.62;
+  doc.image(LOGO, right - 64, 46, { width: 64, height: 64 });
+  doc.fillColor(NAVY).font("Helvetica-Bold").fontSize(22).text(BUSINESS.brand || BUSINESS.name, textLeft, 50, { width: textWidth });
+  if (BUSINESS.tagline) doc.font("Helvetica-Oblique").fontSize(10).fillColor(GOLD).text(BUSINESS.tagline, { width: textWidth });
+  doc.moveDown(0.4).font("Helvetica").fontSize(8.5).fillColor(MUTED);
+  BUSINESS.addressLines.forEach((l) => doc.text(l, { width: textWidth }));
+  doc.moveDown(0.3).fillColor(NAVY);
+  if (BUSINESS.gstin) doc.text(`GST Number : ${BUSINESS.gstin}`, { width: textWidth });
+  if (BUSINESS.phone) doc.text(`Phone Number : ${BUSINESS.phone}`, { width: textWidth });
+  if (BUSINESS.email) doc.text(`Email : ${BUSINESS.email}`, { width: textWidth });
+  const headerBottom = doc.y;
 
-  doc.font("Helvetica-Bold").fontSize(10).fillColor(GOLD).text("INVOICE", left, 50, { width, align: "right" });
-  doc.font("Courier").fontSize(9).fillColor(NAVY).text(b.bookingId, { width, align: "right" });
+  doc.font("Helvetica-Bold").fontSize(13).fillColor(GOLD).text("TAX INVOICE", left, 120, { width, align: "right" });
+  doc.font("Helvetica").fontSize(8).fillColor(MUTED).text("Invoice No.", { width, align: "right" });
+  doc.font("Courier-Bold").fontSize(9).fillColor(NAVY).text(b.bookingId, { width, align: "right" });
   doc.font("Helvetica").fontSize(9).fillColor(MUTED).text(`Date: ${date(b.createdAt)}`, { width, align: "right" });
   if (b.status === "cancelled") {
     doc.font("Helvetica-Bold").fillColor("#b91c1c").text("CANCELLED", { width, align: "right" });
   }
 
-  let y = 140;
+  let y = Math.max(headerBottom, doc.y) + 12;
   doc.moveTo(left, y).lineTo(right, y).strokeColor("#dde3ea").stroke();
   y += 14;
 
@@ -50,7 +62,7 @@ function drawInvoice(doc, b) {
   y += 14;
   doc.font("Helvetica-Bold").fontSize(10).fillColor(NAVY).text(b.guest.name || "-", left, y, { width: width / 2 });
   doc.font("Helvetica").fontSize(9).fillColor(NAVY);
-  [b.guest.address, [b.guest.city, b.guest.pinCode].filter(Boolean).join(" - "), b.guest.phone, b.guest.email, b.guest.gstNumber ? `GSTIN: ${b.guest.gstNumber}` : ""]
+  [b.guest.address, [b.guest.city, b.guest.pinCode].filter(Boolean).join(" - "), b.guest.phone, b.guest.email, b.guest.gstNumber ? `GST Number : ${b.guest.gstNumber}` : ""]
     .filter(Boolean)
     .forEach((l) => doc.text(l, { width: width / 2 }));
   const leftEnd = doc.y;

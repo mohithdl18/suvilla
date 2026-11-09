@@ -1,3 +1,10 @@
+// Resort phone numbers shown in the footer (label as displayed, tel for calling).
+const PHONE_NUMBERS = [
+  { label: "+91 9976-1-24-365", tel: "+919976124365" },
+  { label: "+91 9976-2-24-365", tel: "+919976224365" },
+  { label: "+91 9976-3-24-365", tel: "+919976324365" },
+];
+
 export default function Footer() {
   return (
     <footer className="w-full overflow-hidden bg-white text-foreground">
@@ -234,12 +241,15 @@ export default function Footer() {
                   Terms & Conditions
                 </a>
 
-                <a
-  href="tel:+919976124365"
-  className="hidden w-fit font-body text-[15px] font-medium transition-colors duration-300 hover:text-[var(--accent)] md:block"
->
-  +91 99761 24365
-</a>
+                {PHONE_NUMBERS.map((phone) => (
+  <a
+    key={phone.tel}
+    href={`tel:${phone.tel}`}
+    className="hidden w-fit font-body text-[15px] font-medium transition-colors duration-300 hover:text-[var(--accent)] md:block"
+  >
+    {phone.label}
+  </a>
+))}
 
 <a
   href="mailto:info@suvilla.in"
@@ -259,14 +269,19 @@ export default function Footer() {
         {/* =====================================================
     MOBILE CONTACT
 ====================================================== */}
-        <div className="mt-10 flex items-center justify-between border-t border-black/10 pt-6 md:hidden">
+        <div className="mt-10 flex items-start justify-between gap-4 border-t border-black/10 pt-6 md:hidden">
 
-          <a
-            href="tel:+919976124365"
-            className="font-body text-sm font-medium text-black/70 transition-colors duration-300 hover:text-[var(--accent)]"
-          >
-            +91 99761 24365
-          </a>
+          <div className="flex flex-col gap-1.5">
+            {PHONE_NUMBERS.map((phone) => (
+              <a
+                key={phone.tel}
+                href={`tel:${phone.tel}`}
+                className="font-body text-sm font-medium text-black/70 transition-colors duration-300 hover:text-[var(--accent)]"
+              >
+                {phone.label}
+              </a>
+            ))}
+          </div>
 
           <a
             href="mailto:info@suvilla.in"

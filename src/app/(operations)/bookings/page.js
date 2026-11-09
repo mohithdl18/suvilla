@@ -885,7 +885,7 @@ export default function BookingsPage() {
                       {nights === 1 ? "night" : "nights"}
                     </p>
                   )}
-                  {dates.checkIn && dates.checkOut && longWeekendDates.length > 0 && (
+                  {/* {dates.checkIn && dates.checkOut && longWeekendDates.length > 0 && (
                     <p className="mt-2 inline-flex rounded-full border border-[#e4b441] bg-[#e4b441]/15 px-3 py-1 text-xs font-semibold">
                       Long weekend rates apply on{" "}
                       {longWeekendDates
@@ -894,7 +894,7 @@ export default function BookingsPage() {
                         )
                         .join(", ")}
                     </p>
-                  )}
+                  )} */}
                 </div>
 
                 {selectedRoomIds.length > 0 && (
@@ -1011,7 +1011,7 @@ export default function BookingsPage() {
                   </p>
                 )}
 
-                {dates.checkIn && dates.checkOut && longWeekendDates.length > 0 && (
+                {/* {dates.checkIn && dates.checkOut && longWeekendDates.length > 0 && (
                   <p className="mt-2 inline-flex rounded-full border border-[#e4b441] bg-[#e4b441]/15 px-3 py-1 text-xs font-semibold">
                     Long weekend rates apply on{" "}
                     {longWeekendDates
@@ -1020,7 +1020,7 @@ export default function BookingsPage() {
                       )
                       .join(", ")}
                   </p>
-                )}
+                )} */}
 
                 {selectedPackageIds.length > 0 && remainingHoldTime > 0 && (
                   <p role="timer" className="mt-2 text-sm font-medium">

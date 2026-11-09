@@ -173,7 +173,9 @@ Set it **night by night**. For a Friday–Sunday holiday, enable Friday, Saturda
 1. Click **Offers** on the dashboard.
 2. Enter the **code** (e.g. WINTER15), the **discount %** (1–99) and **valid for (days, from today)**.
 3. Choose **Public** (shown to every guest under the offers icon) or **Private** (only works if you share the code).
-4. Publish. You can switch an offer off from the same window at any time.
+4. Publish. The window lists only **active** offers. Click **Turn off**, then **Yes**, to end one early.
+
+Turned-off and expired offers are deleted and no longer listed. Bookings that used a code keep it, with their discount, in their own record, and the admin audit log keeps a note of every offer published or turned off.
 For private offers, use codes that are hard to guess, e.g. `SUV-K7Q2-FAMILY`.
 
 ### Cancel a booking
@@ -396,7 +398,7 @@ Database: `suvilla_bookings` (or the value of `MONGODB_DB`).
 | `room_availabilty` | Rooms blocked by the admin (the spelling is intentional; do not rename) |
 | `temp_books` | 10-minute holds while a guest is booking (auto-deleted) |
 | `payment_orders` | Every Razorpay order with its server-calculated amount, status and refunds. Before payment an order has an internal reference (`ORD-…`, also shown as the Razorpay receipt); once confirmed it is linked to the booking ID |
-| `promo_codes` | Offer codes (code, %, public/private, validity, usage count) |
+| `promo_codes` | Active offer codes (code, %, public/private, validity, usage count). Expired and turned-off codes are deleted |
 | `long_weekends` | Nights marked as long weekend by the admin |
 | `counters` | The running booking number for each year (`booking-2026` → last number used). **Do not edit or delete**, or numbers may repeat |
 | `admin_sessions` | Admin login sessions (expire after 24 h) |
@@ -471,7 +473,7 @@ When prices change, also update the Rooms page text and the Terms page if they m
 - Download the bookings Excel for accounts.
 - Compare Razorpay settlements with the bookings total.
 - Check Razorpay → Webhooks shows successful deliveries.
-- Switch off old offer codes.
+- Review the active offer codes and turn off any that are no longer needed.
 
 **Every few months (technical)**
 - `npm audit` and update Next.js / dependencies, then `npm run build` and test a booking in test mode.

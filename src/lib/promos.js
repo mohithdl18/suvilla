@@ -163,16 +163,31 @@ export async function createOffer(db, input, username) {
   return toOffer(doc);
 }
 
+/**
+ * Turning an offer off deletes it. Bookings that already used the code keep
+ * their discount and code in their own record, and the admin audit log keeps
+ * a note of the offer, so nothing about past bookings is lost.
+ */
 export async function disableOffer(db, rawCode) {
   const code = normalizePromoCode(rawCode);
   if (!CODE_RE.test(code)) throw new RequestError("Invalid code.");
-  const r = await db.collection("promo_codes").updateOne({ code }, { $set: { active: false } });
-  if (!r.matchedCount) throw new RequestError("Offer not found.", 404);
+  const r = await db.collection("promo_codes").deleteOne({ code });
+  if (!r.deletedCount) throw new RequestError("Offer not found.", 404);
 }
 
+/** Removes offers that have expired or were turned off earlier. */
+export async function removeEndedOffers(db) {
+  const now = new Date();
+  await db.collection("promo_codes").deleteMany({
+    $or: [{ active: { $ne: true } }, { valid_until: { $lte: now } }],
+  });
+}
+
+/** Only live offers (active and not expired), newest first. */
 export async function listOffers(db) {
+  await removeEndedOffers(db);
   const docs = await db.collection("promo_codes").find({}).sort({ created_at: -1 }).limit(100).toArray();
-  return docs.map(toOffer);
+  return docs.map(toOffer).filter((offer) => offer.status === "live");
 }
 
 /** Only live PUBLIC offers — what guests see on the bookings page. */

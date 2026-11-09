@@ -373,6 +373,7 @@ export default function Cart({
           city: customerDetails.city || "",
           pincode: customerDetails.pincode || "",
           aadharNumber: customerDetails.aadharNumber || "",
+          gstNumber: customerDetails.gstNumber || "",
           specialRequests:
             customerDetails.specialRequests ||
             customerDetails.specialRequest ||
