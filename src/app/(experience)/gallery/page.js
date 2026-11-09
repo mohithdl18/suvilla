@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { House } from "lucide-react";
 import Footer from "@/components/Footer/Footer";
+import Location from "@/components/Location/Location";
 import GalleryGrid from "./GalleryGrid";
 
 export const metadata = {
@@ -84,6 +85,7 @@ export default function GalleryPage() {
       {/* ================= GRID ================= */}
       <GalleryGrid images={images} />
 
+      <Location />
       <Footer />
     </main>
   );

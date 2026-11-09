@@ -3,6 +3,7 @@ import Link from "next/link";
 import fs from "fs";
 import path from "path";
 import Footer from "@/components/Footer/Footer";
+import Location from "@/components/Location/Location";
 import BlogGrid from "./BlogGrid";
 import { House } from "lucide-react";
 
@@ -160,6 +161,7 @@ export default function BlogsPage() {
       {/* ================= BLOG GRID ================= */}
       <BlogGrid />
 
+      <Location />
       <Footer />
     </main>
   );

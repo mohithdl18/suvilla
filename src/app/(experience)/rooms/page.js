@@ -5,6 +5,7 @@ import { useState } from "react";
 import MobileNavbar from "@/components/Navbar/MobileNavbar";
 import Navbar from "@/components/Navbar/Navbar";
 import Footer from "@/components/Footer/Footer";
+import Location from "@/components/Location/Location";
 
 import HeroRoom from "@/components/rooms/HeroRoom";
 import RoomNav from "@/components/rooms/RoomNav";
@@ -69,6 +70,7 @@ export default function RoomsPage() {
         <RoomDisplay room={selectedRoom} />
       </div>
 
+      <Location />
       <Footer />
     </main>
   );

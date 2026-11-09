@@ -15,6 +15,7 @@ const ballet = Ballet({
 });
 
 export const metadata = {
+  metadataBase: new URL("https://www.suvilla.in"),
   title: "SU VILLA | BY THE CREEK",
   description:
     "Experience a peaceful luxury stay surrounded by the lush green hills of Sakleshpur.",
@@ -32,10 +33,10 @@ export const metadata = {
     siteName: "SU VILLA | BY THE CREEK",
     images: [
       {
-        url: "images/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Your Website",
+        url: "/images/og-image.jpg",
+        width: 937,
+        height: 860,
+        alt: "SU VILLA by the Creek, Sakleshpur, seen from above",
       },
     ],
     locale: "en_IN",
@@ -44,9 +45,9 @@ export const metadata = {
 
   twitter: {
     card: "summary_large_image",
-    title: "Your Website Title",
-    description: "Your website description.",
-    images: ["images/og-image.png"],
+    title: "SU VILLA | BY THE CREEK",
+    description: "Experience a peaceful luxury stay surrounded by the lush green hills of Sakleshpur.",
+    images: ["/images/og-image.jpg"],
   },
 };
 

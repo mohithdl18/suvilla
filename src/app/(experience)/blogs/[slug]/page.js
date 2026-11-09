@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import Footer from "@/components/Footer/Footer";
+import Location from "@/components/Location/Location";
 import BlogGrid from "../BlogGrid";
 
 import blog1 from "../blog1";
@@ -63,6 +64,7 @@ export default async function BlogSlugPage({ params }) {
       {/* BLOG GRID / MODAL */}
       <BlogGrid initialBlog={blog} />
 
+      <Location />
       <Footer />
 
     </main>

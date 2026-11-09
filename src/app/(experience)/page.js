@@ -60,7 +60,7 @@ export default function Home() {
 
 
 
-      {/* <Location /> */}
+      <Location />
       <Footer />
     </main>
   );
