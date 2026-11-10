@@ -589,7 +589,7 @@ export default function RoomsCard({
                       </span>
                     )} */}
 
-                    <p className="mt-1 text-xs leading-5 text-gray-500">
+                    {/* <p className="mt-1 text-xs leading-5 text-gray-500">
                       {weekdayWeekendLabel(PRICING.accommodation, hasLongWeekend)} per
                       night (weekends are Fri–Sun nights).
                       {checkIn && checkOut
@@ -599,7 +599,7 @@ export default function RoomsCard({
                         ? ", including extra guests."
                         : "."}{" "}
                       Taxes are not included.
-                    </p>
+                    </p> */}
                   </div>
 
                   <button

@@ -342,14 +342,14 @@ export default function PackagesCard({
                       {formatPrice(stayPrice.total)}
                     </p>
 
-                    {stayPrice.longWeekendNights > 0 && (
+                    {/* {stayPrice.longWeekendNights > 0 && (
                       <span className="mt-2 inline-flex rounded-full border border-[#e4b441] bg-[#e4b441]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#052a50]">
                         Long weekend rate on extra guests · {stayPrice.longWeekendNights}{" "}
                         {stayPrice.longWeekendNights === 1 ? "night" : "nights"}
                       </span>
-                    )}
+                    )} */}
 
-                    <p className="mt-1 text-xs leading-5 text-gray-500">
+                    {/* <p className="mt-1 text-xs leading-5 text-gray-500">
                       {formatPrice(pkg.pricePerNight)} per night for{" "}
                       {pkg.baseGuests} guests ×{" "}
                       {stayNights} {stayNights === 1 ? "night" : "nights"}
@@ -357,7 +357,7 @@ export default function PackagesCard({
                         ? `, plus extra guests${checkIn && checkOut ? ` (${nightsBreakdown(stayPrice)})` : ""}`
                         : ""}
                       . Taxes are not included.
-                    </p>
+                    </p> */}
                   </div>
 
                   <button

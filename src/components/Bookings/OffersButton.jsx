@@ -75,12 +75,14 @@ export default function OffersButton() {
         type="button"
         onClick={() => setIsOpen(true)}
         aria-label={`View offers${count ? `, ${count} available` : ""}`}
-        className="fixed bottom-[6.25rem] right-5 z-[90] flex h-16 w-16 items-center justify-center rounded-full bg-[#e4b441] text-[#052a50] shadow-xl transition hover:scale-105 hover:bg-[#052a50] hover:text-white focus:outline-none focus:ring-4 focus:ring-[#e4b441]/50 sm:bottom-[7.25rem] sm:right-7"
+        className="group fixed bottom-[6.25rem] right-[0.875rem] z-[90] flex h-[4.75rem] w-[4.75rem] items-center justify-center rounded-full transition hover:scale-110 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#e4b441]/50 sm:bottom-[7.25rem] sm:right-4 sm:h-[5.5rem] sm:w-[5.5rem]"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7" aria-hidden="true">
-          <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z" />
-          <circle cx="7.5" cy="7.5" r="1.5" />
-        </svg>
+        <img
+          src="/images/offers-badge.png"
+          alt=""
+          aria-hidden="true"
+          className="h-full w-full object-contain drop-shadow-lg transition-transform duration-500 group-hover:rotate-12"
+        />
         {count > 0 && (
           <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-[#F7FAEE] bg-[#052a50] px-1 text-xs font-bold text-white">
             {count}

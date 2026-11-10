@@ -100,7 +100,7 @@ export default function Footer() {
 
               {/* Facebook */}
               <a
-                href="#"
+                href="https://www.facebook.com/profile.php?id=61594154290816"
                 aria-label="Facebook"
                 className="text-black/65 transition-colors duration-300 hover:text-[var(--accent)]"
               >

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function HeroMobile() {
   return (
     <section className="relative h-[100svh] w-full overflow-hidden bg-primary">
@@ -5,7 +7,7 @@ export default function HeroMobile() {
       {/* Hero Image */}
       <div className="absolute inset-0 h-full w-full">
         <img
-          src="/images/Hero.jpeg"
+          src="/images/Hero2.jpeg"
           alt="SU Villa by the Creek"
           className="h-full w-full object-cover"
         />
@@ -31,11 +33,12 @@ export default function HeroMobile() {
             Where nature meets serenity
           </p>
 
-           <button
-            className="mt-7 border border-primary px-7 py-3 font-body text-xs uppercase tracking-[0.2em] text-primary transition-all duration-300 hover:bg-primary hover:text-foreground"
+          <Link
+            href="/bookings"
+            className="mt-7 inline-block border border-primary px-7 py-3 font-body text-xs uppercase tracking-[0.2em] text-primary transition-all duration-300 hover:bg-primary hover:text-foreground"
           >
             Book Now
-          </button>
+          </Link>
 
         </div>
       </div>
