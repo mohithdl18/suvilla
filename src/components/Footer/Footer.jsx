@@ -29,7 +29,7 @@ export default function Footer() {
 
               <a href="/" className="shrink-0">
                 <img
-                  src="/images/logo.png"
+                  src="/images/invoice-logo.png"
                   alt="SU Villa"
                   className="h-auto w-32 object-contain"
                 />
