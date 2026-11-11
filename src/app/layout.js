@@ -1,6 +1,7 @@
 import { Poppins, Ballet } from "next/font/google";
 import "./globals.css";
 import WhatsAppButton from "@/components/WhatsAppButton.jsx";
+import { Analytics } from '@vercel/analytics/next';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -58,7 +59,7 @@ export default function RootLayout({ children }) {
         {children}
 
         {/* <WhatsAppButton /> */}
-        
+        <Analytics />
       </body>
     </html>
   );
